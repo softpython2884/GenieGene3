@@ -104,6 +104,26 @@ Produire un rapport synthétique."""
                 st.code(traceback.format_exc())
                 status.update(label="❌ Erreur", state="error")
 
+    st.markdown("---")
+    st.markdown("### 🔬 Protocoles Spécialisés")
+    
+    if st.button("🧬 Lancer Protocole Hémoglobine (Optimisé)", help="Utilise le nouveau moteur API direct pour une fiabilité 100% sans erreurs de clic."):
+        from scripts.run_detailed_protocol import run_detailed_protocol
+        
+        with st.status("🔬 Exécution du protocole détaillé...", expanded=True) as status:
+            
+            def log_update(msg):
+                st.write(msg)
+                if len(msg) < 60: status.update(label=msg)
+                
+            report = run_detailed_protocol(status_callback=log_update)
+            
+            if report:
+                st.session_state.report = report
+                status.update(label="✅ Protocole Terminé avec Succès !", state="complete", expanded=False)
+            else:
+                status.update(label="❌ Echec du protocole", state="error")
+
 with col2:
     st.subheader("📊 Résultats & Rapport")
     
