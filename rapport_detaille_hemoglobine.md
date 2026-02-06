@@ -1,0 +1,32 @@
+# Synthèse de l'Analyse Biologique
+
+## Je vois (Observations)
+- ![Séquences sélectionnées](None)
+- J'ai chargé les séquences des chaînes Alpha, Bêta et Gamma.
+- Séquence HBA ADNc : Brin Codant (Non Transcrit)
+- Séquence HBB ADNc : Brin Codant (Non Transcrit)
+- Séquence HBG ADNc : Brin Codant (Non Transcrit)
+- ![Transcription effectuée](None)
+- ARNm HBG ADNc ARN : 444 nucléotides.
+- ARNm HBG ADNc ARN(2) : 444 nucléotides.
+- ARNm HBG ADNc ARN(3) : 444 nucléotides.
+- ![Traduction en protéines](None)
+- Protéine HBG ADNc ARN PRO : 147 acides aminés.
+- Protéine HBG ADNc ARN(2) PRO : 147 acides aminés.
+- Protéine HBG ADNc ARN(3) PRO : 147 acides aminés.
+
+## Je sais (Connaissances)
+- L'ARNm HBG ADNc ARN correspond à la séquence ADN par complémentarité (T remplacé par U).
+- L'ARNm HBG ADNc ARN(2) correspond à la séquence ADN par complémentarité (T remplacé par U).
+- L'ARNm HBG ADNc ARN(3) correspond à la séquence ADN par complémentarité (T remplacé par U).
+- Recherche des S (Sérine) et identification des codons correspondants.
+- Dans HBG ADNc ARN PRO, codons Sérine identifiés : UCU, AGC, UCC, AGU.
+- Dans HBG ADNc ARN(2) PRO, codons Sérine identifiés : UCU, AGC, UCC, AGU.
+- Dans HBG ADNc ARN(3) PRO, codons Sérine identifiés : UCU, AGC, UCC, AGU.
+- Triplet CUG code pour : Leucine (L).
+- Triplet CAC code pour : Histidine (H).
+
+## Je conclus (Interprétation)
+- Le codon AUG (Méthionine) marque le début de la traduction.
+- Les codons UAA, UAG, UGA marquent la fin (STOP).
+- Le code est redondant car plusieurs codons (ex: UCU, AGC) codent pour le même acide aminé (Sérine).

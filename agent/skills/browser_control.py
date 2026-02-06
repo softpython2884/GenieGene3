@@ -106,3 +106,18 @@ class BrowserController:
         except Exception as e:
             print(f"⚠️ Erreur d'exécution JS: {e}")
             return None
+
+    def take_screenshot(self, filename):
+        """Takes a screenshot of the current page."""
+        if not self.page:
+            return None
+        try:
+            # Ensure the screenshots directory exists
+            os.makedirs("screenshots", exist_ok=True)
+            path = os.path.join("screenshots", filename)
+            self.page.screenshot(path=path)
+            print(f"📸 Capture d'écran sauvegardée : {path}")
+            return path
+        except Exception as e:
+            print(f"⚠️ Erreur lors de la capture d'écran: {e}")
+            return None

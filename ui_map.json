@@ -1,0 +1,170 @@
+[
+  {
+    "type": "button",
+    "text": "Charger ces séquences",
+    "id": "divChargerCesSequences",
+    "class": "boutonRect",
+    "path": "div#divChargerCesSequences",
+    "onclick": "oBank.loadSelection()"
+  },
+  {
+    "type": "button",
+    "text": "Partager via un lien",
+    "id": "divPartager",
+    "class": "boutonRect",
+    "path": "div#divPartager",
+    "onclick": "oBank.creeLien()"
+  },
+  {
+    "type": "button",
+    "text": "Annuler",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divPanneauBanque > div > div:nth-of-type(3) > div:nth-of-type(3)",
+    "onclick": "oBank.cancel()"
+  },
+  {
+    "type": "button",
+    "text": "Fermer la banque",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divPanneauBanqueEnz > div > div:nth-of-type(3) > div",
+    "onclick": "oEnz.fermeBanque()"
+  },
+  {
+    "type": "button",
+    "text": "Appliquer",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divPanneauModifSeq > div > div > div",
+    "onclick": "oSeq.finModif()"
+  },
+  {
+    "type": "button",
+    "text": "Annuler",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divPanneauModifSeq > div > div > div:nth-of-type(2)",
+    "onclick": "hide(divPanneauModifSeq)"
+  },
+  {
+    "type": "button",
+    "text": "Ajouter cette séquence",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divPanneauSaisieSeq > div > div:nth-of-type(4) > div",
+    "onclick": "oSeq.finSaisie()"
+  },
+  {
+    "type": "button",
+    "text": "Annuler",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divPanneauSaisieSeq > div > div:nth-of-type(4) > div:nth-of-type(2)",
+    "onclick": "hide(divPanneauSaisieSeq)"
+  },
+  {
+    "type": "button",
+    "text": "OK",
+    "id": "butModifNucl",
+    "class": "boutonRect",
+    "path": "div#butModifNucl",
+    "onclick": "oSeq.OKModifNucl()"
+  },
+  {
+    "type": "button",
+    "text": "Annuler",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divModifNuclCont > div:nth-of-type(4) > div:nth-of-type(2)",
+    "onclick": "hide(divFondModifNucl)"
+  },
+  {
+    "type": "button",
+    "text": "OK",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divAvertCont > div:nth-of-type(3) > div",
+    "onclick": "closeAvert()"
+  },
+  {
+    "type": "button",
+    "text": "Oui",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divQuestionModaleCont > div:nth-of-type(3) > div",
+    "onclick": "oModale.funcQuest();oModale.fermeQuestion()"
+  },
+  {
+    "type": "button",
+    "text": "Non",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divQuestionModaleCont > div:nth-of-type(3) > div:nth-of-type(2)",
+    "onclick": "oModale.fermeQuestion()"
+  },
+  {
+    "type": "button",
+    "text": "OK",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divSaisieModaleCont > div:nth-of-type(3) > div",
+    "onclick": "oModale.close(true)"
+  },
+  {
+    "type": "button",
+    "text": "Annuler",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divSaisieModaleCont > div:nth-of-type(3) > div:nth-of-type(2)",
+    "onclick": "oModale.close(false)"
+  },
+  {
+    "type": "button",
+    "text": "Ouvrir la banque de séquences",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divPanneauStartInner > div > div",
+    "onclick": "oBank.openPanel();hide(divPanneauStart)"
+  },
+  {
+    "type": "button",
+    "text": "Charger des séquences (.edi, .fasta, .pdb, etc.)",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divPanneauStartInner > div > label > div",
+    "onclick": "hide(divPanneauStart)"
+  },
+  {
+    "type": "button",
+    "text": "Saisir manuellement une séquence",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divPanneauStartInner > div > div:nth-of-type(4)",
+    "onclick": "hide(divPanneauStart);oSeq.saisir()"
+  },
+  {
+    "type": "button",
+    "text": "Banque d'enzymes",
+    "id": "",
+    "class": "boutonRect",
+    "path": "div#divSeqEnz > div > div:nth-of-type(2)",
+    "onclick": "oEnz.openBank()"
+  },
+  {
+    "type": "button",
+    "text": "Lancer la recherche",
+    "id": "butLancerRecherche",
+    "class": "boutonRect",
+    "path": "div#butLancerRecherche",
+    "onclick": "performSearch()"
+  },
+  {
+    "type": "button",
+    "text": "Cesser la recherche",
+    "id": "butFermerRecherche",
+    "class": "boutonRect",
+    "path": "div#butFermerRecherche",
+    "onclick": "closeRecherche()"
+  }
+]

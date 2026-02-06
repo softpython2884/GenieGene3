@@ -39,6 +39,8 @@ def run_automation():
              return
              
         print("✅ Séquences chargées.")
+        img_load = browser.take_screenshot("1_chargement_sequences.png")
+        report_gen.add_image(img_load, "Séquences chargées (ADN)")
         
         # 4. Analyze DNA
         sequences_dna = api.get_all_sequences_data()
@@ -58,6 +60,8 @@ def run_automation():
         
         api.wait_for_sequences_loaded(min_count=6)
         print("✅ Transcription terminée.")
+        img_trans = browser.take_screenshot("2_transcription.png")
+        report_gen.add_image(img_load, "Séquences transcrites (ARNm)")
         
         # 6. Translation
         print("⚙️ Traduction des ARN...")
@@ -71,6 +75,8 @@ def run_automation():
             
         api.wait_for_sequences_loaded(min_count=9) # 3 DNA + 3 RNA + 3 PRO
         print("✅ Traduction terminée.")
+        img_transl = browser.take_screenshot("3_traduction.png")
+        report_gen.add_image(img_transl, "Séquences traduites (Protéines)")
         
         # 7. Final Data Collection
         print("📊 Collecte des résultats finaux...")
@@ -102,6 +108,9 @@ def run_automation():
         
         # 10. Generate Report
         markdown_report = report_gen.generate_report()
+        
+        # Make screenshots relative in report if needed, but absolute path is safer for now or just basename if in same dir.
+        # Report generator uses raw path passed.
         
         report_path = "rapport_analyse_hemoglobine.md"
         with open(report_path, "w", encoding="utf-8") as f:

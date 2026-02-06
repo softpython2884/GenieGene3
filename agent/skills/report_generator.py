@@ -13,6 +13,9 @@ class ReportGenerator:
     def add_conclusion(self, text):
         self.conclusions.append(text)
 
+    def add_image(self, path, caption=""):
+        self.observations.append(f"![{caption}]({path})")
+
     def generate_report(self):
         """Generates the final structured report."""
         report = "# Synthèse de l'Analyse Biologique\n\n"
