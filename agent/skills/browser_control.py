@@ -1,5 +1,6 @@
 from playwright.sync_api import sync_playwright
 import time
+import os
 
 class BrowserController:
     def __init__(self, headless=False):
