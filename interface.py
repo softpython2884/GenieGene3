@@ -9,6 +9,9 @@ from io import StringIO
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Fix pour Windows et asyncio/Playwright
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 

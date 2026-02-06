@@ -78,20 +78,29 @@ class GenieAgent:
             response_json = llm_client.analyze_dom(context_prompt, dom_content)
             
             try:
-                # Clean response to get JSON
-                cleaned_response = response_json.strip()
-                if cleaned_response.startswith("```json"):
-                    cleaned_response = cleaned_response[7:-3]
-                
+                # Robust JSON extraction using regex
+                import re
+                json_match = re.search(r"\{.*\}", response_json, re.DOTALL)
+                if json_match:
+                    cleaned_response = json_match.group(0)
+                else:
+                    cleaned_response = response_json
+
                 action_data = json.loads(cleaned_response)
-                print(f"\nAction: {action_data['action']} - {action_data['reasoning']}")
+                
+                reasoning = action_data.get('reasoning', 'Aucun raisonnement fourni')
+                action = action_data.get('action', 'unknown')
+                
+                print(f"\nAction: {action} - {reasoning}")
                 
                 self.execute_action(action_data)
                 self.history.append(action_data)
                 
-                if action_data['action'] == 'finish':
+                if action == 'finish':
                     break
                     
+            except json.JSONDecodeError:
+                print(f"Erreur de parsing JSON: {response_json}")
             except Exception as e:
                 print(f"Erreur d'exécution: {e}")
                 import traceback
@@ -113,19 +122,38 @@ class GenieAgent:
         val = action_data.get('value')
         
         if act == 'navigate':
+            if not tgt:
+                print("⚠️ Cible de navigation manquante.")
+                # Fallback intelligent
+                if "geniegen2" in str(action_data).lower() or len(self.history) == 0:
+                     print(f"🔄 Utilisation de l'URL par défaut : {GENIEGENE_URL}")
+                     tgt = GENIEGENE_URL
+                else:
+                    print("❌ Impossible de naviguer : pas d'URL fournie.")
+                    return
+
             self.browser.navigate(tgt)
         elif act == 'click':
-            self.browser.click_element(tgt)
+            if tgt:
+                self.browser.click_element(tgt)
+            else:
+                print("⚠️ Cible de clic manquante.")
         elif act == 'type':
-            self.browser.type_text(tgt, val)
+            if tgt:
+                self.browser.type_text(tgt, val)
+            else:
+                print("⚠️ Cible de saisie manquante.")
         elif act == 'wait':
-            self.browser.wait(int(val) if val else 1000)
+            try:
+                ms = int(val) if val else 1000
+                self.browser.wait(ms)
+            except:
+                self.browser.wait(1000)
         elif act == 'extract':
             # Extraction logic (simplified)
             raw_html = self.browser.get_dom_content()
             seqs = self.extractor.extract_sequences_from_html(raw_html)
             self.reporter.add_observation(f"Séquences trouvées: {len(seqs)}")
-            # Logic to pass data to calculator could go here
         elif act == 'calculate':
             # Calculation logic based on previous extractions
             pass
