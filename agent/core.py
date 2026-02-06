@@ -18,12 +18,13 @@ Règles de conduite :
 4. Analyse : Utilise tes connaissances biologiques.
 
 Format de réponse attendu pour l'exécution (JSON) :
-{
-    "action": "click" | "type" | "select" | "navigate" | "wait" | "extract" | "calculate" | "screenshot" | "finish",
-    "target": "selecteur_css" | "url" | "sequence_a_analyser",
-    "value": "texte_a_saisir" | "valeur_option" | "duree_ms" | null,
-    "reasoning": "Pourquoi je fais ça"
-}
+Une SEULE action :
+{ "action": "...", "target": "...", ... }
+OU une LISTE d'actions (pour aller plus vite, ex: cocher plusieurs cases) :
+[
+  { "action": "...", ... },
+  { "action": "...", ... }
+]
 """
 
 class GenieAgent:
@@ -88,48 +89,59 @@ class GenieAgent:
             response_json = llm_client.analyze_dom(context_prompt, dom_content)
             
             try:
-                import re
-                json_match = re.search(r"\{.*\}", response_json, re.DOTALL)
-                if json_match:
-                    cleaned_response = json_match.group(0)
-                else:
-                    cleaned_response = response_json
-
+                # Robust JSON extraction
+                cleaned_response = response_json.strip()
+                # Remove markdown code blocks if present
+                if "```" in cleaned_response:
+                    cleaned_response = cleaned_response.split("```")[-2] # Get content inside last block
+                    if cleaned_response.startswith("json"):
+                        cleaned_response = cleaned_response[4:]
+                
+                cleaned_response = cleaned_response.strip()
+                
                 action_data = json.loads(cleaned_response)
                 
-                # Support for batched actions (take the first one)
+                action_list = []
                 if isinstance(action_data, list):
-                    if len(action_data) > 0:
-                        # Optional: could queue others, but for now let's just take the first
-                        # to keep the loop synchronized with DOM updates.
-                        action_data = action_data[0]
-                    else:
-                        raise ValueError("Liste d'actions vide")
-
-                # Loop detection
-                current_action_str = str(action_data)
-                if current_action_str == last_action_str:
-                    consecutive_failures += 1
-                    print(f"⚠️ Détection de boucle ({consecutive_failures}/3)")
-                    if consecutive_failures >= 3:
-                        print("❌ Boucle infinie détectée, arrêt d'urgence.")
-                        break
+                    action_list = action_data
                 else:
-                    consecutive_failures = 0
-                last_action_str = current_action_str
+                    action_list = [action_data]
+                
+                if not action_list:
+                     raise ValueError("Liste d'actions vide")
 
-                reasoning = action_data.get('reasoning', 'Aucun raisonnement fourni')
-                action = action_data.get('action', 'unknown')
+                # Execute all actions in the batch
+                for i, action_item in enumerate(action_list):
+                    # Loop detection (on the single action)
+                    current_action_str = str(action_item)
+                    if current_action_str == last_action_str:
+                        consecutive_failures += 1
+                        print(f"⚠️ Détection de boucle ({consecutive_failures}/3)")
+                        if consecutive_failures >= 3:
+                            print("❌ Boucle infinie détectée, arrêt d'urgence.")
+                            # Break inner loop and outer loop request
+                            step_count = max_steps 
+                            break
+                    else:
+                        consecutive_failures = 0
+                    last_action_str = current_action_str
 
-                
-                print(f"\nAction: {action} - {reasoning}")
-                
-                self.execute_action(action_data)
-                self.history.append(action_data)
-                
-                if action == 'finish':
-                    break
+                    reasoning = action_item.get('reasoning', 'Aucun raisonnement fourni')
+                    action = action_item.get('action', 'unknown')
                     
+                    print(f"\nAction ({i+1}/{len(action_list)}): {action} - {reasoning}")
+                    
+                    self.execute_action(action_item)
+                    self.history.append(action_item)
+                    
+                    if action == 'finish':
+                        step_count = max_steps # Force exit
+                        break
+                    
+                    # Small pause between batched actions
+                    if len(action_list) > 1:
+                        time.sleep(0.2)
+
             except json.JSONDecodeError:
                 print(f"Erreur de parsing JSON: {response_json}")
                 consecutive_failures += 1
@@ -144,7 +156,10 @@ class GenieAgent:
                 break
 
             step_count += 1
-            time.sleep(0.5) # Pause for visual following
+            # Sleep moved inside the batch loop or handled naturally by LLM latency
+            # We keep a small sleep here just in case of single actions
+            if len(action_list) == 1:
+                 time.sleep(0.3)
 
         # 3. Final Report
         report = self.reporter.generate_report()
