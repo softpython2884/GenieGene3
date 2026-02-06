@@ -83,11 +83,15 @@ Produire un rapport synthétique."""
                 agent.start()
                 
                 st.write("Navigation et Analyse...")
-                # Exécution (bloquante mais avec UI active via st.status)
-                # On capture stdout pour afficher les logs en temps réel si possible
-                # (Complexe avec Streamlit, on s'en tient à l'exécution simple)
                 
-                report = agent.run_task(task_input)
+                # Fonction de callback pour le log en direct
+                def log_update(msg):
+                    st.write(msg)
+                    # Mise à jour du label du status si c'est court
+                    if len(msg) < 60:
+                        status.update(label=msg)
+                
+                report = agent.run_task(task_input, status_callback=log_update)
                 
                 st.session_state.report = report
                 

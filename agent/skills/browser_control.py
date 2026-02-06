@@ -31,20 +31,10 @@ class BrowserController:
         except:
             print("⚠️ Timeout ou erreur lors du chargement de la page (continuons...)")
 
-    def click_element(self, selector):
-        """Clicks an element specified by a CSS selector."""
-        self.page.wait_for_selector(selector)
-        self.page.click(selector)
-
     def right_click_element(self, selector):
         """Performs a right-click on an element."""
         self.page.wait_for_selector(selector)
         self.page.click(selector, button="right")
-
-    def type_text(self, selector, text):
-        """Types text into an input field."""
-        self.page.wait_for_selector(selector)
-        self.page.fill(selector, text)
 
     def get_dom_content(self, clean=True):
         """Returns the HTML content, optionally cleaned of scripts/styles."""
@@ -81,8 +71,8 @@ class BrowserController:
     def click_element(self, selector):
         """Clicks an element with visibility check."""
         try:
-             # Try generic selector wait first
-             self.page.wait_for_selector(selector, state="visible", timeout=2000)
+             # Try generic selector wait first - Increased timeout for stability
+             self.page.wait_for_selector(selector, state="visible", timeout=5000)
              self.page.click(selector)
         except Exception as e:
              # Fallback: force click or try JS click if playwright fails standard click
@@ -94,12 +84,12 @@ class BrowserController:
 
     def type_text(self, selector, text):
         """Types text into an input field."""
-        self.page.wait_for_selector(selector, state="visible")
+        self.page.wait_for_selector(selector, state="visible", timeout=5000)
         self.page.fill(selector, text)
 
     def select_option(self, selector, value):
         """Selects an option in a <select> element."""
-        self.page.wait_for_selector(selector, state="visible")
+        self.page.wait_for_selector(selector, state="visible", timeout=5000)
         self.page.select_option(selector, value)
 
     def take_screenshot(self, path):

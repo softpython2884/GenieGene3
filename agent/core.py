@@ -42,10 +42,13 @@ class GenieAgent:
     def stop(self):
         self.browser.stop()
 
-    def run_task(self, user_goal):
+    def run_task(self, user_goal, status_callback=None):
         print(f"Objectif: {user_goal}")
         
         # 1. Planning (Pro)
+        if status_callback:
+            status_callback("🧠 Planification de la mission...")
+            
         plan_prompt = f"""
         Objectif utilisateur : {user_goal}
         
@@ -57,6 +60,9 @@ class GenieAgent:
         print(plan)
         # 2. auto-navigation pour éviter la page blanche
         print(f"🚀 Navigation automatique vers {GENIEGENE_URL}...")
+        if status_callback:
+            status_callback("🚀 Démarrage et Navigation...")
+            
         self.browser.navigate(GENIEGENE_URL)
         time.sleep(2)
 
@@ -87,6 +93,9 @@ class GenieAgent:
             Réponds UNIQUEMENT le JSON.
             """
             
+            if status_callback:
+                status_callback(f"🤔 Analyse de la page (Étape {step_count + 1})...")
+                
             response_json = llm_client.analyze_dom(context_prompt, dom_content)
             
             try:
@@ -132,7 +141,11 @@ class GenieAgent:
                     action = action_item.get('action', 'unknown')
                     target_check = action_item.get('target')
                     
-                    print(f"\nAction ({i+1}/{len(action_list)}): {action} sur '{target_check}' - {reasoning}")
+                    log_msg = f"Action ({i+1}/{len(action_list)}): {action} - {reasoning}"
+                    print(f"\n{log_msg}")
+                    
+                    if status_callback:
+                        status_callback(f"⚡ {action}: {reasoning[:60]}...")
                     
                     self.execute_action(action_item)
                     self.history.append(action_item)
