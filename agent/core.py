@@ -19,9 +19,9 @@ Règles de conduite :
 
 Format de réponse attendu pour l'exécution (JSON) :
 {
-    "action": "click" | "type" | "navigate" | "wait" | "extract" | "calculate" | "finish",
+    "action": "click" | "type" | "select" | "navigate" | "wait" | "extract" | "calculate" | "screenshot" | "finish",
     "target": "selecteur_css" | "url" | "sequence_a_analyser",
-    "value": "texte_a_saisir" | null,
+    "value": "texte_a_saisir" | "valeur_option" | "duree_ms" | null,
     "reasoning": "Pourquoi je fais ça"
 }
 """
@@ -53,23 +53,33 @@ class GenieAgent:
         plan = llm_client.plan_task(plan_prompt)
         print("\n--- PLANIFICATION ---\n")
         print(plan)
-        
-        # 2. Execution Loop (Flash)
+        # 2. auto-navigation pour éviter la page blanche
+        print(f"🚀 Navigation automatique vers {GENIEGENE_URL}...")
+        self.browser.navigate(GENIEGENE_URL)
+        time.sleep(2)
+
+        # 3. Execution Loop (Flash)
         steps = plan.split('\n') # Simplistic parsing, can be improved
         
         current_step_index = 0
         max_steps = 20
         step_count = 0
         
+        consecutive_failures = 0
+        last_action_str = ""
+        
         while step_count < max_steps:
-            dom_content = self.browser.get_dom_content()
+            # Use cleaned DOM to save tokens and focus LLM
+            dom_content = self.browser.get_dom_content(clean=True)
             
             # Context for the agent
             context_prompt = f"""
+            {SYSTEM_PROMPT}
+
             Objectif global: {user_goal}
             Plan: {plan}
             
-            Historique récent: {self.history[-3:]}
+            Historique récent: {self.history[-5:]}
             
             Analyse le DOM ci-dessous et décide de la PROCHAINE action immédiate.
             Réponds UNIQUEMENT le JSON.
@@ -78,7 +88,6 @@ class GenieAgent:
             response_json = llm_client.analyze_dom(context_prompt, dom_content)
             
             try:
-                # Robust JSON extraction using regex
                 import re
                 json_match = re.search(r"\{.*\}", response_json, re.DOTALL)
                 if json_match:
@@ -88,8 +97,30 @@ class GenieAgent:
 
                 action_data = json.loads(cleaned_response)
                 
+                # Support for batched actions (take the first one)
+                if isinstance(action_data, list):
+                    if len(action_data) > 0:
+                        # Optional: could queue others, but for now let's just take the first
+                        # to keep the loop synchronized with DOM updates.
+                        action_data = action_data[0]
+                    else:
+                        raise ValueError("Liste d'actions vide")
+
+                # Loop detection
+                current_action_str = str(action_data)
+                if current_action_str == last_action_str:
+                    consecutive_failures += 1
+                    print(f"⚠️ Détection de boucle ({consecutive_failures}/3)")
+                    if consecutive_failures >= 3:
+                        print("❌ Boucle infinie détectée, arrêt d'urgence.")
+                        break
+                else:
+                    consecutive_failures = 0
+                last_action_str = current_action_str
+
                 reasoning = action_data.get('reasoning', 'Aucun raisonnement fourni')
                 action = action_data.get('action', 'unknown')
+
                 
                 print(f"\nAction: {action} - {reasoning}")
                 
@@ -101,14 +132,19 @@ class GenieAgent:
                     
             except json.JSONDecodeError:
                 print(f"Erreur de parsing JSON: {response_json}")
+                consecutive_failures += 1
             except Exception as e:
                 print(f"Erreur d'exécution: {e}")
                 import traceback
                 traceback.print_exc()
+                consecutive_failures += 1
+            
+            if consecutive_failures >= 5:
+                print("❌ Trop d'erreurs consécutives, arrêt.")
                 break
-                
+
             step_count += 1
-            time.sleep(1) # Pause for visual following
+            time.sleep(0.5) # Pause for visual following
 
         # 3. Final Report
         report = self.reporter.generate_report()
@@ -143,6 +179,23 @@ class GenieAgent:
                 self.browser.type_text(tgt, val)
             else:
                 print("⚠️ Cible de saisie manquante.")
+        elif act == 'select':
+            if tgt and val:
+                try:
+                    self.browser.select_option(tgt, val)
+                except Exception as e:
+                    print(f"⚠️ Erreur de sélection option '{val}' sur '{tgt}': {e}")
+            else:
+                print("⚠️ Cible ou valeur de sélection manquante.")
+        elif act == 'screenshot':
+            filename = f"screenshot_{int(time.time())}.png"
+            # Sauvegarde dans le dossier courant ou un dossier dédié
+            filepath = f"screenshots/{filename}"
+            import os
+            os.makedirs("screenshots", exist_ok=True)
+            self.browser.take_screenshot(filepath)
+            print(f"📸 Capture d'écran sauvegardée : {filepath}")
+            self.reporter.add_observation(f"Capture d'écran prise : {filename}")
         elif act == 'wait':
             try:
                 ms = int(val) if val else 1000

@@ -26,7 +26,10 @@ class BrowserController:
         if not self.page:
             raise Exception("Browser not started. Call start() first.")
         self.page.goto(url)
-        self.page.wait_for_load_state("networkidle")
+        try:
+            self.page.wait_for_load_state("domcontentloaded", timeout=10000)
+        except:
+            print("⚠️ Timeout ou erreur lors du chargement de la page (continuons...)")
 
     def click_element(self, selector):
         """Clicks an element specified by a CSS selector."""
@@ -43,19 +46,63 @@ class BrowserController:
         self.page.wait_for_selector(selector)
         self.page.fill(selector, text)
 
-    def get_dom_content(self):
-        """Returns the full HTML content of the page."""
-        return self.page.content()
+    def get_dom_content(self, clean=True):
+        """Returns the HTML content, optionally cleaned of scripts/styles."""
+        if not self.page:
+             return ""
+        
+        content = self.page.content()
+        if clean:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(content, 'html.parser')
+            # Remove scripts, styles, svgs, meta, comments
+            for element in soup(["script", "style", "svg", "meta", "link", "noscript"]):
+                element.decompose()
+            # Remove comments
+            from bs4 import Comment
+            for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+                comment.extract()
+            return str(soup)
+        return content
 
     def get_text(self, selector):
         """Gets the text content of an element."""
-        self.page.wait_for_selector(selector)
-        return self.page.text_content(selector)
+        try:
+            self.page.wait_for_selector(selector, state="visible", timeout=3000)
+            return self.page.text_content(selector)
+        except:
+             return None
 
     def wait(self, milliseconds):
         """Waits for a specified amount of time."""
-        self.page.wait_for_timeout(milliseconds)
+        if self.page:
+            self.page.wait_for_timeout(milliseconds)
+
+    def click_element(self, selector):
+        """Clicks an element with visibility check."""
+        try:
+             # Try generic selector wait first
+             self.page.wait_for_selector(selector, state="visible", timeout=2000)
+             self.page.click(selector)
+        except Exception as e:
+             # Fallback: force click or try JS click if playwright fails standard click
+             print(f"⚠️ 'wait_for_selector' failed for {selector}, attempting JS click...")
+             try:
+                 self.page.eval_on_selector(selector, "el => el.click()")
+             except Exception as e2:
+                 raise Exception(f"Failed to click {selector}: {e2}")
+
+    def type_text(self, selector, text):
+        """Types text into an input field."""
+        self.page.wait_for_selector(selector, state="visible")
+        self.page.fill(selector, text)
+
+    def select_option(self, selector, value):
+        """Selects an option in a <select> element."""
+        self.page.wait_for_selector(selector, state="visible")
+        self.page.select_option(selector, value)
 
     def take_screenshot(self, path):
         """Takes a screenshot of the current page."""
-        self.page.screenshot(path=path)
+        if self.page:
+            self.page.screenshot(path=path)
