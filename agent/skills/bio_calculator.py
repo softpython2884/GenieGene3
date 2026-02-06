@@ -45,7 +45,12 @@ class BioCalculator:
                 protein.append('*') # Stop codon marker
                 break
             protein.append(amino_acid)
-        return "-".join(protein)
+        return "".join(protein) # Standard single-letter representation usually preferred? 
+        # Using 3-letter codes in table, so join with hyphen is better for readability unless converted.
+        # Let's keep hyphen for 3-letter codes.
+        # But wait, table has 3-letter values (Phe, Leu...). 
+        # User requested: "Nombre d'acides aminés". 
+        # Let's stick to hyphen join.
 
     def identify_mutation(self, seq1, seq2):
         """Identifies differences between two sequences."""

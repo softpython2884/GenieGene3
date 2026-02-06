@@ -15,15 +15,14 @@ class GeniegenAPI:
         () => {
             if (typeof oBank === 'undefined') return false;
             
-            // Open panel IS needed because addToSel might interact with the DOM elements of the panel
-            try {
-                oBank.openPanel(); 
-            } catch(e) { console.log("Panel open error", e); }
+            // Open panel to be safe
+            try { oBank.openPanel(); } catch(e) {}
             
-            // Add sequences
-            oBank.addToSel(53); // Alpha
-            oBank.addToSel(58); // Beta
-            oBank.addToSel(61); // Gamma
+            // Add sequences by ID
+            // 53: Alpha, 58: Beta, 61: Gamma
+            // Check if already loaded to avoid duplicates?
+            // oBank.tSel is the selection list.
+            oBank.tSel = [53, 58, 61]; 
             
             oBank.loadSelection();
             return true;
@@ -31,31 +30,34 @@ class GeniegenAPI:
         """
         return self.browser.evaluate_js(script)
 
+    def wait_for_sequences_loaded(self, min_count=3, timeout=10):
+        """Waits for sequences to be present in oSeqNa.tSeq."""
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            count = self.browser.evaluate_js("typeof oSeqNa !== 'undefined' ? oSeqNa.tSeq.length : 0")
+            if count >= min_count:
+                return True
+            time.sleep(0.5)
+        return False
+
     def transcribe_sequence(self, index, use_coding_strand=False):
-        """Transcribes the sequence at the given index."""
-        # 0 = non-transcrit (default), 1 = transcrit (matrice)
-        # The logic in the app seems to be: Select seq, then action.
-        # But we can perhaps call oCode.transcrire(seqObject) direct?
-        # Log showed: oCode.transcrireSelSeq(false)
-        
-        # We need to SELECT the sequence first programmatically.
-        # oSeq.select(id)? oSeq.tabSeqs[i].selected = true?
-        
+        """Transcribes the sequence at the given index in oSeqNa."""
         script = f"""
         () => {{
-            if (!oSeq || !oCode) return false;
+            if (typeof oSeqNa === 'undefined' || typeof oCode === 'undefined') return false;
             
-            // Deselect all
-            oSeq.deselectAll();
+            // Select the target sequence locally
+            // oSeqNa.tSeq[i].sel handles selection state
             
-            // Select the target sequence
-            // Assuming tabSeqs is the array
-            if (oSeq.tabSeqs && oSeq.tabSeqs[{index}]) {{
-                oSeq.tabSeqs[{index}].selected = true;
-                // Force redraw or update state? 
-                // oSeq.update(); // Hypothetical
+            // Deselect all handled by app logic usually, but let's be explicit
+            if (oSeq && oSeq.deselectAll) oSeq.deselectAll();
+            
+            if (oSeqNa.tSeq && oSeqNa.tSeq[{index}]) {{
+                oSeqNa.tSeq[{index}].sel = true;
+                oSeq.updateSel(); // Important to trigger UI updates
                 
                 // Transcribe
+                // oCode.transcrireSelSeq takes boolean for coding strand
                 oCode.transcrireSelSeq({str(use_coding_strand).lower()});
                 return true;
             }}
@@ -65,15 +67,24 @@ class GeniegenAPI:
         return self.browser.evaluate_js(script)
 
     def translate_sequence(self, index):
-        """Translates the sequence at the given index."""
-        # Log: oCode.traduireSelSeq('debut')
+        """Translates the selected sequence (assumed newly added/transcribed)."""
+        # Translation often creates a new sequence object or modifies view.
+        # We need to ensure we target the right one.
+        # Usually translation acts on the SELECTED sequence.
+        
         script = f"""
         () => {{
-            if (!oSeq || !oCode) return false;
-            oSeq.deselectAll();
+            if (typeof oSeqNa === 'undefined' || typeof oCode === 'undefined') return false;
             
-            if (oSeq.tabSeqs && oSeq.tabSeqs[{index}]) {{
-                oSeq.tabSeqs[{index}].selected = true;
+            // Assuming we want to translate the sequence at 'index'
+            // NOTE: Transcription creates a NEW sequence. 
+            // If we transcribed Alpha (index 0), the mRNA is likely at index 3 (if 0,1,2 were initial).
+            // This method blindly translates whatever is at 'index'.
+            
+            oSeq.deselectAll();
+            if (oSeqNa.tSeq && oSeqNa.tSeq[{index}]) {{
+                oSeqNa.tSeq[{index}].sel = true;
+                oSeq.updateSel();
                 oCode.traduireSelSeq('debut');
                 return true;
             }}
@@ -83,19 +94,20 @@ class GeniegenAPI:
         return self.browser.evaluate_js(script)
 
     def get_all_sequences_data(self):
-        """Extracts data for all active sequences."""
+        """Extracts data for all active sequences in oSeqNa."""
         script = """
         () => {
-            if (!oSeq || !oSeq.tabSeqs) return [];
+            if (typeof oSeqNa === 'undefined' || !oSeqNa.tSeq) return [];
             
-            return oSeq.tabSeqs.map(s => ({
+            return oSeqNa.tSeq.map(s => ({
                 id: s.id,
-                nom: s.nom,
+                titre: s.titre,
                 type: s.type, // ADN, ARN, PRO
                 seq: s.seq,
                 longueur: s.seq.length,
-                brin: s.infoBrin || "Inconnu" // Hypothetical field
+                // Computed/Extra fields if available
             }));
         }
         """
         return self.browser.evaluate_js(script)
+

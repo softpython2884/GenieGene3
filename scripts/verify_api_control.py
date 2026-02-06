@@ -27,14 +27,15 @@ def verify_control():
     success = api.load_hemoglobin_sequences()
     print(f"   -> Resultat commande charge: {success}")
     
-    time.sleep(5) # Increased wait time
+    # Wait using the new method
+    loaded = api.wait_for_sequences_loaded(min_count=3)
     
     # Debug: Check count
-    count = browser.evaluate_js("oSeq.tabSeqs ? oSeq.tabSeqs.length : -1")
+    count = browser.evaluate_js("typeof oSeqNa !== 'undefined' ? oSeqNa.tSeq.length : -1")
     print(f"📊 Nombre de séquences après chargement: {count}")
     
-    if count <= 0:
-        print("❌ Aucune séquence chargée. Abandon.")
+    if not loaded:
+        print("❌ Echec du chargement (timeout). Abandon.")
         browser.stop()
         return
 
@@ -53,11 +54,14 @@ def verify_control():
     print("⚙️ Transcription de la séquence 2 (Gamma)...")
     res = api.transcribe_sequence(2)
     time.sleep(1)
+    
+    # Wait for transcriptions to appear (we expect 3 DNA + 3 RNA = 6 seqs)
+    api.wait_for_sequences_loaded(min_count=6)
 
     # 5. Extract Data
     print("📊 Extraction des données...")
     data = api.get_all_sequences_data()
-    print(json.dumps(data, indent=2))
+    print(json.dumps(data, indent=2, ensure_ascii=False))
     
     print("Test terminé.")
     # browser.stop() # Keep open to see result
