@@ -22,9 +22,10 @@ Une SEULE action :
 { "action": "...", "target": "...", ... }
 OU une LISTE d'actions (pour aller plus vite, ex: cocher plusieurs cases) :
 [
-  { "action": "...", ... },
-  { "action": "...", ... }
+  { "action": "...", "target": "...", "reasoning": "..." },
+  { "action": "...", "target": "...", "reasoning": "..." }
 ]
+IMPORTANT : 'target' est OBLIGATOIRE même dans une liste !
 """
 
 class GenieAgent:
@@ -99,6 +100,7 @@ class GenieAgent:
                 
                 cleaned_response = cleaned_response.strip()
                 
+                print(f"🔍 Réponse brute LLM: {cleaned_response}") 
                 action_data = json.loads(cleaned_response)
                 
                 action_list = []
@@ -128,8 +130,9 @@ class GenieAgent:
 
                     reasoning = action_item.get('reasoning', 'Aucun raisonnement fourni')
                     action = action_item.get('action', 'unknown')
+                    target_check = action_item.get('target')
                     
-                    print(f"\nAction ({i+1}/{len(action_list)}): {action} - {reasoning}")
+                    print(f"\nAction ({i+1}/{len(action_list)}): {action} sur '{target_check}' - {reasoning}")
                     
                     self.execute_action(action_item)
                     self.history.append(action_item)
