@@ -203,17 +203,48 @@ class GenieAgent:
             except:
                 self.browser.wait(1000)
         elif act == 'extract':
-            # Extraction logic (simplified)
-            raw_html = self.browser.get_dom_content()
-            seqs = self.extractor.extract_sequences_from_html(raw_html)
-            self.reporter.add_observation(f"Séquences trouvées: {len(seqs)}")
-        elif act == 'calculate':
-            # Calculation logic based on previous extractions
-            pass
-        elif act == 'finish':
-            pass
-        else:
-            print(f"Action inconnue: {act}")
+            # Improved extraction logic
+            if tgt:
+                # Check for JS extraction
+                if tgt.startswith("window.") or tgt.startswith("document.") or "return " in tgt:
+                     print(f"🖥️ Exécution JS: {tgt[:50]}...")
+                     res = self.browser.evaluate_js(tgt)
+                     if res:
+                         self.reporter.add_observation(f"Donnée JS ({tgt[:30]}...): {res}")
+                         # Also print specifically for the user to see in logs
+                         print(f"✅ Résultat JS: {res}")
+                     else:
+                         print("⚠️ Résultat JS vide ou erreur.")
+                else:
+                    # Targeted text extraction
+                    text = self.browser.get_text(tgt)
+                    if text:
+                        print(f"📄 Texte extrait de {tgt}: {text[:50]}...")
+                        self.reporter.add_observation(f"Donnée extraite ({tgt}): {text}")
+                    else:
+                        print(f"⚠️ Impossible d'extraire le texte de {tgt}")
+            else:
+                # General extraction (tables, sequences)
+                print("🔍 Extraction générale (Tables & Séquences)...")
+                raw_html = self.browser.get_dom_content()
+                
+                # Tables (Comparison results)
+                tables = self.extractor.extract_tables(raw_html)
+                for i, table in enumerate(tables):
+                    self.reporter.add_observation(f"Tableau {i+1}:\n{table}")
+                    print(f"📊 Tableau extrait:\n{table}")
+
+                # Sequences
+                seqs = self.extractor.extract_sequences_from_html(raw_html)
+                prots = self.extractor.extract_proteins(raw_html)
+                
+                if seqs:
+                    self.reporter.add_observation(f"Séquences ADN trouvées: {len(seqs)}")
+                if prots:
+                    self.reporter.add_observation(f"Protéines trouvées: {len(prots)}")
+                
+                if not tables and not seqs and not prots:
+                    self.reporter.add_observation("Aucune donnée structurée trouvée automatiquement.")
 
 if __name__ == "__main__":
     # Test script usage

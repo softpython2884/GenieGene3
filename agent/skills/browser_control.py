@@ -106,3 +106,13 @@ class BrowserController:
         """Takes a screenshot of the current page."""
         if self.page:
             self.page.screenshot(path=path)
+
+    def evaluate_js(self, script):
+        """Evaluates a JavaScript script in the page context."""
+        if not self.page:
+            return None
+        try:
+            return self.page.evaluate(script)
+        except Exception as e:
+            print(f"⚠️ Erreur d'exécution JS: {e}")
+            return None
