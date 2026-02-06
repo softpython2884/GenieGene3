@@ -59,3 +59,25 @@ class BioCalculator:
             if n1 != n2:
                 diffs.append(f"Position {i+1}: {n1} -> {n2}")
         return diffs
+
+    def verify_relationship(self, dna_seq, rna_seq):
+        """
+        Determines the relationship between a DNA and RNA sequence.
+        Returns: 'identity' (Coding strand), 'complementarity' (Template strand), or 'unrelated'.
+        """
+        dna_clean = dna_seq.upper().strip()
+        rna_clean = rna_seq.upper().strip()
+        
+        # Check Identity (Coding Strand): Match if T -> U
+        dna_as_rna = dna_clean.replace('T', 'U')
+        if dna_as_rna == rna_clean:
+            return "IDENTITÉ (Brin Codant détecté : T remplacé par U)"
+            
+        # Check Complementarity (Template Strand): Match A<->U, T->A, C<->G
+        complement_map = {'A':'U', 'T':'A', 'C':'G', 'G':'C'}
+        dna_transcribed = "".join([complement_map.get(n, n) for n in dna_clean])
+        
+        if dna_transcribed == rna_clean:
+            return "COMPLÉMENTARITÉ (Brin Transcrit détecté)"
+            
+        return "AUCUNE RELATION DIRECTE (Vérifiez l'alignement ou les mutations)"
