@@ -1,0 +1,661 @@
+<!DOCTYPE html><html><head>
+	<meta charset="utf-8">
+	<meta property="og:title" content="Geniegen 2">
+	<meta property="og:description" content="Une application pour aligner des séquences d'ADN ou d'acides aminés.">
+	<meta name="google" content="notranslate">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, shrink-to-fit=no, user-scalable=no">
+	<title>Geniegen 2</title>
+	<script>
+		// enlève le fbclid avant toute autre chose
+		let url=window.location.href;
+		if (url.includes ("fbclid=")) {
+			let tUrl=url.split("?");
+			let url1=tUrl[0];
+			let url2=tUrl[1];
+			let tUrl2=url2.split("&");
+			tUrl2=tUrl2.filter(c=>!c.includes("fbclid="));
+			url2=tUrl2.join("&");
+			if (url2=="") {
+				url=url1;
+			} else {
+				url=url1+"?"+url2;
+			}
+			window.location.href = url;
+		}
+	</script>
+	<script type="text/javascript" src="js/gestDemarrage.js"></script>
+	<script type="text/javascript" src="js/alignement.js"></script>
+	<script type="text/javascript" src="js/recherche.js"></script>
+	<script type="text/javascript" src="js/gestGlobalEvents.js"></script>
+	<script type="text/javascript" src="js/gestModale.js"></script>
+	<script type="text/javascript" src="js/gestDivWin.js"></script>
+	<script type="text/javascript" src="js/gestAnim.js"></script>
+	<script type="text/javascript" src="js/fileOperations.js"></script>
+	<script type="text/javascript" src="js/gestMenus.js"></script>
+	<script type="text/javascript" src="js/gestUtils.js"></script>
+	<script type="text/javascript" src="js/gestSequences.js"></script>
+	<script type="text/javascript" src="js/traceSequences.js"></script>
+	<script type="text/javascript" src="js/gestProt.js"></script>
+	<script type="text/javascript" src="js/gestHydropathie.js"></script>
+	<script type="text/javascript" src="js/gestBanque.js"></script>
+	<script type="text/javascript" src="js/gestDistances.js"></script>
+	<script type="text/javascript" src="js/gestDotPlot.js"></script>
+	<script type="text/javascript" src="js/gestElectrophorese.js"></script>
+	<script type="text/javascript" src="js/gestUPGMA.js"></script>
+	<script type="text/javascript" src="js/gestEnz.js"></script>
+	<script type="text/javascript" src="js/gestCode.js"></script>
+	<script type="text/javascript" src="js/phylocanvas.min.js"></script>
+	<script type="text/javascript" src="js/msa.js"></script>
+	<script type="text/javascript" src="js/piscamp.js"></script>
+	<script type="text/javascript" src="js/encoding-indexes.js"></script>    
+    <script type="text/javascript" src="js/encoding.js"></script>
+	<script type="text/javascript" src="js/jszip.min.js"></script>
+	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/menus.css">
+	<link rel="stylesheet" href="css/divWin.css">
+	<link rel="icon" type="image/png" href="images/icones/favicon.png">
+<script src="js/biomsa-2024.js"></script><script type="text/javascript" src="banque/banqueSequences.js?1770382219547"></script></head>
+
+<body onload="oDem.start ()" onmouseleave="mouseOutBody()" style="display: block; font-size: 15.84px;">
+	<div id="divWin" style="position:fixed;width:100%;height:100%"> <!-- conteneur des événements des fenêtres flottantes -->
+	<div id="divBody" style="position:fixed;background-color:white;width:100%;height:100%" onmousemove="mouseMoveBody(event)" ontouchstart="touchStartBody(event)" ontouchmove="touchMoveBody(event)" ontouchend="touchEndBody(event)" onmouseup="mouseUpBody(event)" onmousedown="mouseDownBody(event)">
+		<input type="file" id="fileInputSequences" accept="" multiple="" onclick="oMenu.exitMenu()" onchange="oFile.loadSequences()" style="display:none"> 
+
+		<div id="divPanneauBanque" class="fondGrandPanneau noselect">
+			<div style="display:inline-block;margin:1em;padding:1em;width:calc(100% - 4em);height:calc(100% - 4em);border:0.1em solid black;border-radius:0.3em;background-color:white" class="ombre">
+				<h1 style="text-align:center">Banque de séquences de Geniegen 2</h1>
+				<div id="divBanqueListeSequences" style="float:left;width:50%;height:calc(100% - 2em);text-align:center;">
+					<h2>Séquences et packs disponibles</h2><br>
+					<table style="width:100%">
+						<tbody><tr tabindex="-1">
+							<td style="white-space:nowrap">Saisissez quelques mots-clés : </td>
+							<td style="width:100%" tabindex="-1"><input id="inputMotsCles" oninput="oBank.saisieMots()" type="text" style="width:100%" class="itext"></td>
+						</tr>
+					</tbody></table>
+					<div style="text-align:left">
+						<div id="checkBankPRO" class="divCheckBox" onclick="oBank.togglePRO()"></div> protéines
+						&nbsp;&nbsp;<div id="checkBankARN" class="divCheckBox" onclick="oBank.toggleARN()"></div> ARN
+						&nbsp;&nbsp;<div id="checkBankADN" class="divCheckBox" onclick="oBank.toggleADN()"></div> ADN
+					</div>
+					<br>
+					<div id="divBanqueListeSequencesTxt" style="text-align:center;height:calc(100% - 11.5em);overflow-y:scroll"></div>
+				</div>
+				<div id="divBanqueListePanier" style="float:right;width:45%;overflow-y:auto">
+					<h2>Séquences et packs sélectionnés</h2>
+					<p><i>Cliquez sur un élément pour le retirer de votre sélection</i></p>
+					<div id="divBanqueListePanierTxt" style="text-align:center"></div>
+				</div>
+				<div style="text-align:center;width:100%;position:absolute;bottom:2.5em;left:50%;transform:translate(-50%)">
+					<div id="divChargerCesSequences" class="boutonRect" onclick="oBank.loadSelection()">Charger ces séquences</div>
+					&nbsp;&nbsp;&nbsp;&nbsp;
+					<div id="divPartager" class="boutonRect" onclick="oBank.creeLien()">Partager via un lien</div>
+					&nbsp;&nbsp;&nbsp;&nbsp;
+					<div class="boutonRect" onclick="oBank.cancel()">Annuler</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="divPanneauBanqueEnz" class="fondGrandPanneau noselect">
+			<div style="display:inline-block;margin:1em;padding:1em;width:calc(100% - 4em);height:calc(100% - 4em);border:0.1em solid black;border-radius:0.3em;background-color:white" class="ombre">
+				<h1 style="text-align:center">Banque d'enzymes de restriction de Geniegen 2</h1>
+				<div id="divBanqueListeEnzymes" style="float:left;width:50%;height:calc(100% - 4em);text-align:center;">
+					<h2>Enzymes disponibles</h2><br>
+					<table style="width:100%">
+						<tbody><tr>
+							<td style="white-space:nowrap">Saisissez quelques lettres du nom de l'enzyme : </td>
+							<td style="width:100%"><input id="inputEnzyme" oninput="oEnz.saisieNom()" type="text" style="width:100%"></td>
+						</tr>
+					</tbody></table>
+					<br>
+					<div id="divBanqueListeEnzymesTxt" style="text-align:center;height:calc(100% - 10em);overflow-y:auto"></div>
+				</div>
+				<div id="divBanqueListePanierEnzymes" style="float:right;width:45%;height:calc(100% - 8em)">
+					<h2>Enzymes sélectionnées</h2>
+					<p><i>Ces enzymes apparaîtront dans le menu déroulant rapide, dans le panneau inférieur de l'écran principal. 
+					Cliquez sur un élément du tableau ci-dessous pour le retirer de votre sélection.</i></p>
+					<div id="divBanqueListePanierEnzymesTxt" style="text-align:center;height:calc(100% - 8em);overflow-y:auto"></div>
+				</div>
+				<div style="text-align:center;position:absolute;bottom:2.5em;left:50%;transform:translate(-50%)">
+					<div class="boutonRect" onclick="oEnz.fermeBanque()">Fermer la banque</div>
+				</div>
+			</div>
+		</div>
+		
+		
+		<div id="divPanneauModifSeq" class="fondGrandPanneau noselect">
+			<div style="display:inline-block;margin:1em;padding:1em;width:calc(100% - 4em);height:calc(100% - 4em);border:0.1em solid black;border-radius:0.3em;background-color:white" class="ombre">
+				<h1 style="text-align:center">Modification/édition d'une séquence</h1>
+				<br><br>
+				<p>Modifier la séquence dans le champ ci-dessous puis cliquer sur le bouton "Appliquer" : </p><br>
+				<textarea id="inputTextSequenceModif" style="width:calc(100% - 2em);height:12em;font-size:1em"></textarea>
+				<div style="text-align:center;position:absolute;bottom:2.5em;left:50%;transform:translate(-50%)">
+					<div class="boutonRect" onclick="oSeq.finModif()">Appliquer</div>
+					&nbsp;&nbsp;&nbsp;&nbsp;
+					<div class="boutonRect" onclick="hide(divPanneauModifSeq)">Annuler</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="divPanneauSaisieSeq" class="fondGrandPanneau noselect">
+			<div style="display:inline-block;margin:1em;padding:1em;width:calc(100% - 4em);height:calc(100% - 4em);border:0.1em solid black;border-radius:0.3em;background-color:white" class="ombre">
+				<h1 style="text-align:center">Saisie manuelle ou copie/collage d'une séquence</h1>
+				<br><br>
+				<div>Nom de la séquence : <input id="inputTitreSeqSaisie" type="text" value=""></div>
+				<br><br>
+				<div>Type de séquence : 
+					<select id="selectTypeSaisie" style="font-size:1em">
+						<option value="ADN">ADN</option>
+						<option value="ARN">ARN</option>
+						<option value="PRO">Protéine</option>
+					</select>
+				</div>
+				<br><br>
+				<div>Séquence (saisir ou coller dans le cadre ci-dessous la séquence de nucléotides / acides aminés) : <br>
+					<textarea id="inputTextSequenceSaisie" style="width:calc(100% - 2em);height:16em;font-size:1em"></textarea>
+				</div>
+				<div style="text-align:center;position:absolute;bottom:2.5em;left:50%;transform:translate(-50%)">
+					<div class="boutonRect" onclick="oSeq.finSaisie()">Ajouter cette séquence</div>
+					&nbsp;&nbsp;&nbsp;&nbsp;
+					<div class="boutonRect" onclick="hide(divPanneauSaisieSeq)">Annuler</div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="divFondModifNucl" class="fondModal noselect" style="display:none">
+			<div id="divModifNuclCont" class="noselect ombre" style="font-size:1.2em">
+				<div id="divModifNuclTitre" style="text-align:center;font-size:1.2em"></div>
+				<br><br>
+				<div style="text-align:center"><span id="spanAncienNucl">C ⟹</span> <input id="inputModifNucl" oninput="oSeq.checkValidModifNucl()" type="text" style="font:inherit;text-transform:uppercase;text-align:center"></div>
+				<br>				
+				<div id="divModifNuclConsigne" style="text-align:center;font-style:italic"></div>
+				<div style="text-align:center;position:absolute;bottom:1.5em;left:50%;transform:translate(-50%)">
+					<div id="butModifNucl" class="boutonRect" onclick="oSeq.OKModifNucl()">OK</div>
+					&nbsp;&nbsp;&nbsp;&nbsp;
+					<div class="boutonRect" onclick="hide(divFondModifNucl)">Annuler</div>
+				</div>
+			</div>		
+		</div>
+		
+		<div id="divFondAvertissement" class="fondModal noselect" style="display:none">
+			<div id="divAvertCont" class="noselect ombre" style="font-size:1.2em">
+				<div id="divAvertHeader" class="avertHeader">
+					<div id="divEnTeteAvert" style="width:100%;font-weight:bold;font-size:1.2em;pointer-event:none">Avertissement</div>
+				</div>
+				<div id="divAvert" style="position:relative;width:100%;height:calc(100% - 1.7em - 3em);text-align:center">
+					<div id="divAlertTxt" style="position:absolute;width:calc(100% - 2em);top:50%;left:50%;transform:translate(-50%,-50%)">
+						Ceci est un avertissement
+					</div>
+				</div>
+				<div style="text-align:center;position:absolute;bottom:1em;left:50%;transform:translate(-50%)">
+					<div class="boutonRect" onclick="closeAvert()">OK</div>
+				</div>
+			</div>		
+		</div>
+		
+		<div id="divFondQuestionModale" class="fondModal noselect" style="display:none">
+			<div id="divQuestionModaleCont" class="noselect ombre" style="font-size:1.2em">
+				<div class="avertHeader">
+					<div style="width:100%;font-weight:bold;font-size:1.2em;pointer-event:none">Question</div>
+				</div>
+				<div style="position:relative;width:100%;height:calc(100% - 1.7em - 3em);text-align:center">
+					<div id="divQuestionTxt" style="position:absolute;width:calc(100% - 2em);top:50%;left:50%;transform:translate(-50%,-50%)">
+						Ceci est une question
+					</div>
+				</div>
+				<div style="text-align:center;position:absolute;bottom:1.5em;left:50%;transform:translate(-50%)">
+					<div class="boutonRect" onclick="oModale.funcQuest();oModale.fermeQuestion()">Oui</div>
+					<div class="boutonRect" onclick="oModale.fermeQuestion()">Non</div>
+				</div>
+			</div>		
+		</div>
+		
+		<div id="divFondSaisieModale" class="fondModal noselect" style="display:none">
+			<div id="divSaisieModaleCont" class="noselect ombre" style="font-size:1.2em">
+				<div id="divSaisieModaleHeader" class="avertHeader">
+					<div id="divEnTeteSaisieModale" style="width:100%;font-weight:bold;font-size:1.2em;pointer-event:none">Saisie de texte</div>
+				</div>
+
+				<div id="divSaisieModale" style="position:relative;width:100%;height:calc(100% - 1.7em - 3em);text-align:center">
+					<div style="position:absolute;width:100%;top:50%;left:50%;transform:translate(-50%,-50%);padding:1em">
+						<div id="spanSaisieModaleTxt">Veuillez saisir le nouveau nom pour cette séquence :</div>
+						<input id="inputSaisieModaleTxt" type="text" style="width:calc(100% - 3em)">
+					</div>
+					
+				</div>
+				<div style="text-align:center;position:absolute;bottom:2.5em;left:50%;transform:translate(-50%)">
+					<div class="boutonRect" onclick="oModale.close(true)">OK</div>
+					&nbsp;&nbsp;&nbsp;&nbsp;
+					<div class="boutonRect" onclick="oModale.close(false)">Annuler</div>
+				</div>
+			</div>		
+		</div>
+
+		<div id="divPanneauStart" class="fondModal noselect" style="background-color:#F7F7F7;display:block">
+			<canvas id="canvFond" style="width:100%;height:100%;position:fixed;opacity:0.3" width="1280" height="691"></canvas>
+			<div id="divPanneauStartInner" class="ombre">
+				<h1>GenieGen 2</h1>
+				<p><i><b>Que voulez-vous faire pour commencer ?</b></i></p>
+				<div style="text-align:center">
+					<div class="boutonRect" style="width:24em" onclick="oBank.openPanel();hide(divPanneauStart)">
+						<div class="miniIconPan" style="background-image:url('images/icones/liste.png');"></div>Ouvrir la banque de séquences 
+					</div>
+					<div style="height:1.5em"></div>
+					<label for="fileInputSequences"><div class="boutonRect" style="width:24em" onclick="hide(divPanneauStart)">
+						<div class="miniIconPan" style="background-image:url('images/icones/open.png');"></div>Charger des séquences (.edi, .fasta, .pdb, etc.)
+					</div></label>
+						<div style="height:3.8em"></div>
+					<div class="boutonRect" style="width:24em" onclick="hide(divPanneauStart);oSeq.saisir()">
+						<div class="miniIconPan" style="background-image:url('images/icones/clavier.png');"></div>Saisir manuellement une séquence
+					</div>
+				</div>
+				<div style="height:0.8em"></div>
+				<p style="font-size:0.6em;font-style:italic">Le saviez-vous ? Un clic droit sur le titre d'une séquence<br>permet d'accéder à des fonctions supplémentaires (BLAST par exemple).</p>
+			</div>
+			<div id="divAuteurStart" onclick="hide(divPanneauStart);aboutClick()" style="pointer-events:auto;cursor:pointer;"><span id="spanVersion2">v2.40</span> Application : P. COSENTINO<br>Algorithmes d'alignement: P. PILLOT, D. AUBERT PENNEQUIN<br>(Info RGPD et librairies utilisées)
+			</div>
+		</div>
+		
+		<div id="divWaitModale" class="noselect">
+			<div id="divTexteWaitModale">Veuillez patienter</div>
+		</div>
+			
+		<div id="divMain" class="noselect" onclick="clickMain()" onmousemove="mouseMoveMain(event)" oncontextmenu="return false;">
+			<div id="divPasteZone" style="display:none">
+				<div style="position:absolute;margin:1em;width:calc(100% - 2em);height:calc(100% - 2em)">
+					<div id="divPasteSequences" style="position:absolute;top:0;height:30%;width:100%;display:none;">
+						<div>Coller ou saisir les séquences dans ce champ, puis cliquer <span onclick="extraitSequences()" style="cursor:pointer">[ ici ]</span></div>
+						<div style="position:absolute;top:3em;height:calc(100% - 3em);width:100%;border:0.1em solid black;background-color:#FFAAAA">
+							<textarea id="inputAreaSeq" type="textarea" style="width:100%;height:100%;border:none;background-color:#FFF;"></textarea>
+						</div>
+					</div>
+					
+					
+				</div>
+			</div>
+			
+			<div id="divPos"></div>
+			
+			<div id="divCtxMenu" class="ctxMenu ombre" onmousedown="oMenu.mouseDownCtxMenu(event)" onmousemove="event.stopPropagation()" style="display: none;">
+				<div id="divCtxMenuTitre"></div>
+				<div><hr></div>
+				<div class="ctxMenuElem" onclick="oSeq.infosCtx()">Informations sur cette séquence</div>
+				<div class="ctxMenuElem" id="ctxMenuRenommer" onclick="oSeq.renommerCtx()">Renommer</div>
+				<div class="ctxMenuElem" id="ctxMenuModif" onclick="oSeq.modifier()">Modifier la séquence</div>
+				<div class="ctxMenuElem" id="ctxMenuDupliquer" onclick="oSeq.dupliquer()">Dupliquer la séquence</div>
+				<div class="ctxMenuElem" id="ctxMenuSommet" onclick="oSeq.monteSommetSecCtx()">Déplacer en haut de la liste</div>
+				<div class="ctxMenuElem" id="ctxMenuRemonter" onclick="oSeq.monteSecCtx()">Remonter d'une ligne</div>
+				<div class="ctxMenuElem" id="ctxMenuElemTrans" onclick="oCode.transcrireCtxSeq(false)">Transcrire en ARN</div>
+				<div class="ctxMenuElem" id="ctxMenuElemTrad" onclick="oCode.traduireCtxSeq('debut')">Traduire en protéine <span id="spanFromStart">(depuis le début)</span></div>
+				<div class="ctxMenuElem" id="ctxMenuElemTradPrem" onclick="oCode.traduireCtxSeq('premier')">Traduire (depuis le 1er codon <span id="spanCodStart">ATG</span>)</div>
+				<div class="ctxMenuElem" id="ctxMenuElemCpl" onclick="oCode.creeComplCtxSeq()">Créer le brin complémentaire</div>
+				<div class="ctxMenuElem" id="ctxMenuProt3D" onclick="oProt.ctxLoad()">Afficher la structure 3D</div>
+				<div class="ctxMenuElem" id="ctxMenuBlast" onclick="oSeq.ctxBlast()">Rechercher (BLAST)</div>
+				<div class="ctxMenuElem" id="ctxMenuElemHydropathie" onclick="oHyd.calculeProfil()">Tracer un profil d'hydropathie</div>
+				<div><hr></div>
+				<div class="ctxMenuElem" id="ctxMenuSuppr" onclick="oSeq.eraseSeqCtx()">Supprimer</div>
+			</div>
+			
+			<div id="divCtxMenu2" class="ctxMenu ombre" onmousedown="oMenu.mouseDownCtxMenu(event)" onmousemove="event.stopPropagation()" style="display: none;">
+				<div id="divCtxMenu2Titre">Histidine (His,H) #50</div>
+				<div><hr></div>
+				<div class="ctxMenuElem" onclick="oSeq.substitueCtx2()">Substituer (remplacer) <span class="resNuc2">cet acide aminé</span></div>
+				<div class="ctxMenuElem" onclick="oSeq.insereCtx2(false)">Insérer un <span class="resNuc">acide aminé</span> après</div>
+				<div class="ctxMenuElem" onclick="oSeq.insereCtx2(true)">Insérer un <span class="resNuc">acide aminé</span> avant</div>
+				<hr>
+				<div class="ctxMenuElem" onclick="oSeq.supprCtx2()">Supprimer <span class="resNuc2">cet acide aminé</span></div>
+				<div class="ctxMenuElem" onclick="oSeq.supprApresCtx()" id="ctxMenuSupprApres">Supprimer tout ce qui suit</div>
+				<div class="ctxMenuElem" onclick="oSeq.supprAvantCtx()" id="ctxMenuSupprAvant">Supprimer tout ce qui précède</div>
+			</div>
+			
+			<!-- séquences -->
+			
+			<div id="divSeq" style="position: relative; width: calc(100% - 2em); height: calc(50% - 1em); margin-left: 1em; background-color: rgb(255, 255, 255); display: none;">
+				<div style="margin-top:1em;margin-bottom:0.5em">
+					<div style="width:100%;height:2em;line-height:2em">
+						<div style="position:absolute;left:0"><b>Séquences chargées</b></div>
+						<div id="divDiminueFS" title="Diminue la taille des lettres (Alt -)" onclick="oSeq.diminueFS()" style="position:absolute;right:8em;border:1px solid white;width:1.2em;height:1.2em;cursor:pointer;background-image:url('images/icones/diminue-fs.png');background-size:cover"></div>
+						<div id="divAugmenteFS" title="Augmente la taille des lettres (Alt +)" onclick="oSeq.augmenteFS()" style="position:absolute;right:6.5em;border:1px solid white;width:1.2em;height:1.2em;cursor:pointer;background-image:url('images/icones/augmente-fs.png');background-size:cover"></div>
+						<div id="divTogglePointMatch" title="Activer/désactiver l'affichage des identités sous la forme de points médians (après alignement)" onclick="oSeq.togglePointMatch()" style="position:absolute;right:1em;border:1px solid white;width:1.2em;height:1.2em;cursor:pointer;background-image:url('images/icones/equal.png');background-size:cover" class="menuDisabled"></div>
+						<div id="divToggleColorNucl" title="Activer/désactiver la coloration de l'arrière plan des séquences" onclick="oSeq.toggleColorNucl()" style="position: absolute; right: 2.5em; border: 1px solid black; width: 1.2em; height: 1.2em; cursor: pointer; background-image: url(&quot;images/icones/rgb.png&quot;); background-size: cover;"></div>
+					</div>
+					<div style="display:inline-block;margin-left:10em">similaires&nbsp;&nbsp;
+					<div id="divSpectre" style="display:inline-block;width:5em;height:0.6em;"><canvas id="canvSpectre" style="width:100%;height:100%" width="79" height="9"></canvas></div>
+					&nbsp;&nbsp;différentes</div>
+				</div>
+				<canvas id="canvMatchSeqNa"></canvas>
+				<canvas id="canvGradSeqNa" onmousedown="oSeq.canvasGradMouseDown(oSeqNa,event)" onmousemove="oSeq.canvasGradMouseMove(oSeqNa,event)" style="transform:translateY(5px)"></canvas>
+				<div id="divSeqNaScroll" class="seqScroll" style="max-height: 0px;">
+					<canvas id="canvSeq" onclick="oSeq.canvasSeqClick(oSeqNa,event)" onmousemove="oSeq.canvasSeqMouseMove(oSeqNa,event)" onmousedown="oSeq.canvasSeqMouseDown(oSeqNa,event)" ondblclick="oSeq.dblClick(oSeqNa,event)" ontouchend="oSeq.canvasSeqTouchEnd(oSeqNa,event)" ontouchstart="oSeq.canvasSeqTouchStart(oSeqNa,event)" width="0" style="width: 0px;"></canvas>
+					<div id="divSurlignePos" style="height: 17.424px;"></div>
+				</div>
+				<canvas id="canvCurSeq" style="cursor: pointer; height: 26px;" class="noselect" onmousemove="oSeq.canvasSeqCurMouseMove(oSeqNa,event)" ontouchstart="oSeq.canvasSeqCurTouchStart(oSeqNa,event)" onmousedown="oSeq.canvasSeqCurMouseDown(oSeqNa,event)" onmouseup="mouseUpBody(event)" height="26" width="0">
+				</canvas>
+				<div id="divCurSeqNa" class="divCur noselect" style="height: 26px; top: -13px; display: block;"></div>
+			</div>
+			<br>
+			
+			<div id="divSeqAlConsigne" style="position:relative;width:calc(100% - 2em);height:calc(50% - 2em);margin-left:1em;background-color:#FFFFFF;border-top:0.1em solid black;box-sizing: border-box;display:none;">
+				<div style="text-align:center;font-size:1.5em;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:32em;width:90%;font-style:italic">
+					Rappel : afin de pouvoir comparer les séquences sélectionnées en tenant compte des discontinuités (gaps), vous devez au préalable les aligner (menu "Actions / Aligner").
+				</div>
+			</div>
+			
+			<div id="divSeqAl" style="position:relative;width:calc(100% - 2em);height:calc(50% - 2.5em);margin-left:1em;background-color:#FFFFFF;border-top:0.1em solid black;box-sizing: border-box;display:none;" class="noselect">
+				<div style="width:100%;height:2em;line-height:2em">
+					<div style="position:absolute;left:0;"><b>Séquences alignées</b></div>
+					<div id="divAlgo" title="Score : 0" class="noselect" style="position:absolute;right:0;font-size:0.8em"> (auto)</div>
+					<div style="position:absolute;left:14em;font-style:italic;overflow:hidden;font-size:0.8em" id="spanPrecisionSymboleIdentite"></div>
+				</div>
+				<canvas id="canvMatchSeqAl"></canvas><br>
+				<canvas id="canvGradSeqAl" onmousedown="oSeq.canvasGradMouseDown(oSeqAl,event)" onmousemove="oSeq.canvasGradMouseMove(oSeqAl,event)" style="transform:translateY(5px)"></canvas>
+				<div id="divSeqAlScroll" class="seqScroll" style="max-height: 0px;">
+					<canvas id="canvSeqAl" onclick="oSeq.canvasSeqClick(oSeqAl,event)" onmousemove="oSeq.canvasSeqMouseMove(oSeqAl,event)" onmousedown="oSeq.canvasSeqMouseDown(oSeqAl,event)" ontouchend="oSeq.canvasSeqTouchEnd(oSeqAl,event)" ontouchstart="oSeq.canvasSeqTouchStart(oSeqAl,event)" width="0" style="width: 0px;"></canvas>
+				</div>
+				<canvas id="canvCurSeqAl" style="cursor: pointer; height: 26px;" class="noselect" onmousemove="oSeq.canvasSeqCurMouseMove(oSeqAl,event)" ontouchstart="oSeq.canvasSeqCurTouchStart(oSeqAl,event)" onmousedown="oSeq.canvasSeqCurMouseDown(oSeqAl,event)" onmouseup="mouseUpBody(event)" height="26" width="0"></canvas>
+				<div id="divCurSeqAl" class="divCur noselect" style="height: 26px; top: -13px; display: block;"></div>
+			</div>
+			
+			<div id="divSeqEnz" style="position:relative;width:calc(100% - 2em);height:calc(50% - 2em);margin-left:1em;background-color:#FFFFFF;border-top:0.1em solid black;box-sizing: border-box;;display:none">
+				<div style="width:100%;overflow:hidden;white-space: nowrap;"><b>Séquences après action de l'enzyme : </b>
+					<select class="styledSelect" id="selectEnz" onchange="oEnz.changeSelectEnz ()" style="font-size:1em"><option value="">(choisir une enzyme)</option><option>RsaI</option><option>TspEI</option><option>EcoRII</option><option>FokI</option><option>BamHI</option><option>EcoRI</option><option>(autre enzyme)</option></select>
+					&nbsp;&nbsp;&nbsp;
+					<div id="checkADNcirc" class="divCheckBox" onclick="oEnz.clickADNcirc ()"></div> ADN circulaire&nbsp;
+					<div class="boutonRect" onclick="oEnz.openBank()" style="font-size:0.9em;height:1.4em;line-height:1.4em">Banque d'enzymes</div>
+				</div>
+				<br>
+				<canvas id="canvGradSeqEnz" onmousedown="oSeq.canvasGradMouseDown(oSeqEnz,event)" onmousemove="oSeq.canvasGradMouseMove(oSeqEnz,event)" style="transform:translateY(5px)"></canvas>
+				<div id="divSeqEnzScroll" class="seqScroll" style="max-height: 0px;">
+					<canvas id="canvSeqEnz" onclick="oSeq.canvasSeqClick(oSeqEnz,event)" onmousemove="oSeq.canvasSeqMouseMove(oSeqEnz,event)" onmousedown="oSeq.canvasSeqMouseDown(oSeqEnz,event)" ontouchend="oSeq.canvasSeqTouchEnd(oSeqEnz,event)" ontouchstart="oSeq.canvasSeqTouchStart(oSeqEnz,event)" width="0" style="width: 0px;"></canvas>
+				</div>
+				<canvas id="canvCurSeqEnz" style="cursor: pointer; height: 26px;" class="noselect" onmousemove="oSeq.canvasSeqCurMouseMove(oSeqEnz,event)" ontouchstart="oSeq.canvasSeqCurTouchStart(oSeqEnz,event)" onmousedown="oSeq.canvasSeqCurMouseDown(oSeqEnz,event)" onmouseup="mouseUpBody(event)" height="26" width="0"></canvas>
+				<div id="divCurSeqEnz" class="divCur noselect" style="height: 26px; top: -13px; display: block;"></div>
+			</div>
+			
+			<!-- Fenetres DivWin -->
+						
+			<div id="divMiniDiv"></div>
+			
+			<div id="divTabCompCont" class="noselect ombre" style="overflow: hidden; top: 2.28896%; left: 1.23657%; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); position: absolute; min-height: 5em; min-width: 5em; width: 43.3118%; height: 57.2668%; display: none;"><div id="divTabCompHeader" class="barreHeader"><div id="divEnTeteTabComp" style="position:absolute;left:0;top:0;font-size:1em;pointer-event:none">&nbsp;Tableau de comparaison</div><div id="divTabCompClose" title="Fermer cette fenêtre" class="miniButClose"></div></div>
+				<div style="height:0.5em">&nbsp;</div>
+				<div id="divTabComp" style="position:relative;width:100%;height:calc(100% - 1.7em);overflow:scroll">
+					&nbsp;&nbsp;Type de tableau :
+					<select class="styledSelect" id="selectTypeTableau" onchange="oDist.changeTypeTableau()" style="font-size:0.9em">
+						<option value="nombreId">Similarité (nb d'identités)</option>
+						<option value="blastId" selected="">Similarité (% d'identités)</option>
+						<option value="gapCompId">Similarité (% d'identités, lacunes compressées)</option>
+						<option value="zoneCommuneId">Similarité (% d'identités, zone commune)</option>
+						<option value="nombreDiffGapInclus">Dissemblance (nb de différences, lacunes incluses)</option>
+						<option value="nombreDiffGapExclus">Dissemblance (nb de différences, lacunes exclues)</option>
+						<option value="pourcDiffZoneCommune">Dissemblance (% de différences, zone commune)</option>
+						<option value="hamming">Distance de Hamming normalisée (p-distance)</option>
+						<option value="levenshtein" ="selected"="">Distance de Levenshtein normalisée</option>
+					</select>
+					<div style="font-size:0.8em;margin-left:2em">
+						<div id="checkNomComplet" class="divCheckBox" onclick="oDist.clickNomComplet()"></div> noms complets des séquences dans la 1ère ligne</div>
+					<div id="divTabCompTxt" style="padding:1em;font-size:0.9em;"></div>	
+				</div>				
+			<div id="divTabCompPoignee" class="poignee noAPK" style="opacity:0.5"></div></div>
+			
+			<div id="divDotPlotCont" class="noselect ombre" style="overflow: hidden; top: 2.28896%; left: 24.7498%; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); position: absolute; min-height: 5em; min-width: 5em; width: 61.875%; height: 57.2668%; display: none;"><div id="divDotPlotHeader" class="barreHeader"><div id="divEnTeteDotPlot" style="position:absolute;left:0;top:0;font-size:1em;pointer-event:none">&nbsp;DotPlot</div><div id="divDotPlotClose" title="Fermer cette fenêtre" class="miniButClose"></div></div>
+				<div id="divDotPlot" style="position:relative;width:100%;height:calc(100% - 1.7em);overflow:hidden">
+					<canvas id="canvDot" style="width:100%;height:100%" onmousemove="oDot.mouseMove(event)"></canvas>
+				</div>				
+			<div id="divDotPlotPoignee" class="poignee noAPK" style="opacity:0.5"></div></div>
+			
+			<div id="divHydropathieCont" class="noselect ombre" style="overflow: hidden; top: 2.28896%; left: 19.7998%; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); position: absolute; min-height: 5em; min-width: 5em; width: 30.9375%; height: 57.2668%; display: none;"><div id="divHydropathieHeader" class="barreHeader"><div id="divEnTeteHydropathie" style="position:absolute;left:0;top:0;font-size:1em;pointer-event:none">&nbsp;Profil d'hydropathie</div><div id="divHydropathieClose" title="Fermer cette fenêtre" class="miniButClose"></div></div>
+				<div id="divHydropathie" style="position:relative;width:100%;height:calc(100% - 1.7em);overflow:hidden">
+					<div id="divCanvHydropathie" style="position:absolute;width:100%;height:100%;overflow:hidden">
+						<canvas id="canvHydropathie" onmousemove="oHyd.mouseMove(event)"></canvas>
+					</div>
+				</div>				
+			<div id="divHydropathiePoignee" class="poignee noAPK" style="opacity:0.5"></div></div>
+			
+			<div id="divRechercheCont" class="noselect ombre" style="overflow: hidden; top: 36.6504%; left: 9.8999%; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); position: absolute; min-height: 10em; min-width: 20em; width: 37.124%; height: 27.4878%; display: none;"><div id="divRechercheHeader" class="barreHeader"><div id="divEnTeteRecherche" style="position:absolute;left:0;top:0;font-size:1em;pointer-event:none">&nbsp;Fenêtre de recherche</div><div id="divRechercheClose" title="Fermer cette fenêtre" class="miniButClose"></div></div>
+				<div id="divRecherche" style="position:relative;width:100%;height:calc(100% - 1.7em);overflow:hidden;background-color:#F7F7F7">
+					<div id="divInnerRecherche" style="padding:0.5em;height:100%">
+						Motif recherché : <input type="radio" id="radioRechNucl" onclick="selectNuclRecherche()" checked="">&nbsp;nucléotides &nbsp;&nbsp;&nbsp;<input type="radio" id="radioRechAmino" onclick="selectAminoRecherche()">&nbsp;acides aminés 
+						<br>
+						<input type="text" id="inputSeqRecherche" style="width:100%;margin-top:0.25em" onkeydown="onInputSeqRecherche(event)" oninput="onInputSeqRecherche(event)">
+						<br>
+						<div id="divRecherche1lettre" style="font-size: 0.7em; margin-bottom: 0.8em; opacity: 0;"><i>Veuillez utiliser le code à 1 lettre pour les acides aminés.</i></div>
+						<div id="butLancerRecherche" class="boutonRect" onclick="performSearch()">Lancer la recherche</div>
+						&nbsp;&nbsp;&nbsp;
+						<div id="butFermerRecherche" class="boutonRect" onclick="closeRecherche()">Cesser la recherche</div>
+						<br><br>
+						<div style="font-size:0.7em"><i>Le nombre d'occurrences du motif est indiqué pour chaque séquence via le menu contextuel « Informations sur cette séquence » (clic droit).</i></div>
+					</div>
+				</div>				
+			<div id="divRecherchePoignee" class="poignee noAPK" style="opacity:0.5"></div></div>
+			
+			<div id="divElectroCont" class="noselect ombre" style="overflow: hidden; top: 2.28896%; left: 44.5496%; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); position: absolute; min-height: 5em; min-width: 5em; width: 29.6997%; height: 50.3932%; display: none;"><div id="divElectroHeader" class="barreHeader"><div id="divEnTeteElectro" style="position:absolute;left:0;top:0;font-size:1em;pointer-event:none">&nbsp;Electrophorèse simulée</div><div id="divElectroClose" title="Fermer cette fenêtre" class="miniButClose"></div></div>
+				<div id="divElectro" style="position:relative;width:100%;height:calc(100% - 2.8em);overflow-y:auto">
+					<div id="divCanvElectro" style="width:100%;overflow:hidden">
+						<canvas id="canvElectro" style="margin:1em;margin-bottom:0em;"></canvas>
+					</div>
+					<div style="width:100%">
+						<div id="divLegendeElectro" style="font-size:0.8em;padding:1em"></div>
+					</div>
+				</div>				
+			<div id="divElectroPoignee" class="poignee noAPK" style="opacity:0.5"></div></div>
+			
+			<div id="divProtCont" class="noselect ombre" style="overflow: hidden; top: 2.28896%; left: 18.562%; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); position: absolute; min-height: 5em; min-width: 5em; width: 34.6497%; height: 64.1382%; display: none;"><div id="divProtHeader" class="barreHeader"><div id="divEnTeteProt" style="position:absolute;left:0;top:0;font-size:1em;pointer-event:none">&nbsp;Protéine</div><div id="divProtClose" title="Fermer cette fenêtre" class="miniButClose"></div></div>
+				<div id="divProt" style="position:relative;width:100%;height:calc(100% - 1.7em);overflow:hidden"></div>				
+				<div id="divProtTitre" style="position:absolute;text-align:center;top:2em;width:100%;font-size:1.3em;pointer-events:none"></div>
+				<div id="divProtSablier"></div>
+			<div id="divProtPoignee" class="poignee noAPK" style="opacity:0.5"></div></div>
+			
+			<div id="divPhenogCont" class="noselect ombre" style="overflow: hidden; top: 2.28896%; left: 47.0239%; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); position: absolute; min-height: 5em; min-width: 5em; width: 43.3118%; height: 57.2668%; display: none;"><div id="divPhenogHeader" class="barreHeader"><div id="divEnTetePhenog" style="position:absolute;left:0;top:0;font-size:1em;pointer-event:none">&nbsp;Phénogramme</div><div id="divPhenogClose" title="Fermer cette fenêtre" class="miniButClose"></div></div>
+				<div id="divPhenog" style="position:relative;width:100%;height:calc(100% - 1.7em)">
+				
+					<div id="divAlgoDist" style="position:relative;width:calc(100% - 2em);height:2em;line-height:2em;white-space: nowrap;overflow:hidden">
+						&nbsp;&nbsp;Algorithme de distance :
+						<select class="styledSelect" id="selectAlgoDist" onchange="oDist.changeTypeAlgoDist()" style="font-size:0.9em">
+							<option value="" class="disabled">(inadapté, veuillez en choisir un autre)</option>
+							<option value="blastId" selected="">Similarité (% d'identités)</option>
+							<option value="gapCompId">Similarité (% d'identités, lacunes compressées)</option>
+							<option value="zoneCommuneId">Similarité (% d'identités, zone commune)</option>
+							<option value="pourcDiffZoneCommune">Dissemblance (% de différences, zone commune)</option>
+							<option value="hamming">Distance de Hamming normalisée (p-distance)</option>
+							<option value="levenshtein" ="selected"="">Distance de Levenshtein normalisée</option>
+						</select>
+					</div>				
+					
+					<div id="divPhylocanvas" style="position: absolute; top: 1.7em; height: calc(100% - 1.7em); width: 100%; pointer-events: none; box-sizing: border-box;" class=" pc-container"><canvas id="divPhylocanvas__canvas" class="phylocanvas" height="0" width="0" style="position: relative; z-index: 1; height: 0px; width: 0px;"></canvas><div class="phylocanvas-tooltip" style="display: none; position: fixed; z-index: 2000; background: rgba(97, 97, 97, 0.9); color: rgb(255, 255, 255); cursor: pointer; padding: 8px; margin-top: 16px; border-radius: 2px; text-align: center; font-family: sans-serif; font-size: 10px; font-weight: 500;"></div></div>		
+					<div id="divPhenoAver" style="position:absolute;top:1.7em;height:calc(100% - 1.7em);width:100%;pointer-events:none">
+						<div style="padding:1em">
+							<b>Attention</b> : l'algorithme de distance choisi (<i><span id="typeTableauChoisi"></span></i>) ne permet pas la construction d'un phénogramme (arbre matérialisant le degré de similitude entre les séquences).
+							<br><br>
+							Veuillez en choisir un autre dans la liste ci-dessus (Algorithme de distance).
+							<br><br>
+							<div style="font-size:0.8em">
+							<i>Remarque : si la topologie d'un phénogramme paraît aberrante, vous pouvez également essayer d'utiliser une autre méthode d'alignement (Options / Algorithme d'alignement).</i>
+							</div>
+						</div>
+					</div>
+				</div>
+			<div id="divPhenogPoignee" class="poignee noAPK" style="opacity:0.5"></div></div>
+			
+			<div id="divCodeCont" class="noselect ombre" style="overflow: hidden; top: 2.28896%; left: 30.9375%; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); position: absolute; min-height: 5em; min-width: 5em; width: 30.9375%; height: 57.2668%; display: none;"><div id="divCodeHeader" class="barreHeader"><div id="divEnTeteCode" style="position:absolute;left:0;top:0;font-size:1em;pointer-event:none">&nbsp;Code génétique</div><div id="divCodeClose" title="Fermer cette fenêtre" class="miniButClose"></div></div>
+				<div id="divCode" style="position:relative;width:100%;height:calc(100% - 1.7em)">
+					<div style="background-image:url('images/png/code-genetique.png');background-size:contain;width:100%;background-repeat:no-repeat;background-position:center;height:100%;width:100%"></div>
+				</div>
+			<div id="divCodePoignee" class="poignee noAPK" style="opacity:0.5"></div></div>
+			
+			<div id="divAbrevCont" class="noselect ombre" style="overflow: hidden; top: 2.28896%; left: 22.2742%; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 255); position: absolute; min-height: 5em; min-width: 5em; width: 34.6497%; height: 45.813%; display: none;"><div id="divAbrevHeader" class="barreHeader"><div id="divEnTeteAbrev" style="position:absolute;left:0;top:0;font-size:1em;pointer-event:none">&nbsp;Abréviations des acides aminés</div><div id="divAbrevClose" title="Fermer cette fenêtre" class="miniButClose"></div></div>
+				<div id="divAbrev" style="position:relative;width:100%;height:calc(100% - 1.7em)">
+					<div style="background-image:url('images/png/abrev-aa.png');background-size:contain;width:100%;background-repeat:no-repeat;background-position:center;height:100%;width:100%"></div>
+				</div>
+			<div id="divAbrevPoignee" class="poignee noAPK" style="opacity:0.5"></div></div>
+			
+			<!-- Fin des fenêtres DivWin -->
+		
+		</div> <!-- /divMain -->
+		
+		<div id="divMenu" class="noselect" style="font-size:0.9em"> 
+			<div id="divBarreMenu">
+				<div id="divBMFichier" class="elementBarreMenu">Fichier</div>
+				<div id="divBMEdition" class="elementBarreMenu menuDisabled">Edition</div>
+				<div id="divBMActions" class="elementBarreMenu menuDisabled">Actions</div>
+				<div id="divBMAffichage" class="elementBarreMenu">Affichage</div>
+				<div id="divBMOptions" class="elementBarreMenu">Options</div>
+				<div id="divBarreAuteur" class="elementBarreMenu" style="font-style:italic;font-size:0.9em;opacity:0.4" onclick="aboutClick()">
+					<div class="logoCC"></div>&nbsp;P.Cosentino <span id="spanVersion">v2.40</span> (infos RGPD, et librairies utilisées)
+				</div>
+				<div id="divInfo" class="elementBarreMenu" style="pointer-events:none;font-style:italic;opacity:0.25;font-size:0.6em;"></div>
+			</div>
+					
+			<div id="divBMFichierPanneau" class="panneauMenu ombre" style="width: 23em; left: 0px; top: 28.5px; display: none;">
+				<div id="divMenuCollerSequence" class="elemPanneau" onclick="oBank.openPanel()">Ouvrir la banque de séquences (Alt B)</div>
+				<label id="labelMenuChargerSequence" class="boutonInline" for="fileInputSequences" style="cursor:pointer"><div class="elemPanneau">Charger des séquences (.edi, .fasta, .pdb)</div></label>
+				<div id="divMenuCollerSequence" class="elemPanneau" onclick="oSeq.saisir()">Saisir/coller une séquence</div>
+				<div id="divMenuExporter" class="elemPanneau" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Exporter')">Exporter <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div><hr></div>
+				<div id="divMenuAPropos" class="elemPanneau" onclick="oMenu.update();aboutClick()">A propos</div>	
+				<div id="divQuitSection" style="display: none;">
+					<div><hr></div>
+					<div class="elemPanneau" onclick="window.close()">Quitter l'application</div>				
+				</div>
+			</div>
+			<div id="divBMEditionPanneau" class="panneauMenu ombre" style="width: 24em; left: 76.5625px; top: 28.5px; display: none;">
+				<div id="divMenuRechercher" class="elemPanneau" onclick="toggleRecherche()">Rechercher (Alt F)</div>
+				<div id="divMenuSelectAll" class="elemPanneau" onclick="oSeq.selectAll()">Tout sélectionner (Ctrl A)</div>
+				<div id="divMenuDeselectAll" class="elemPanneau" onclick="oSeq.deselectAll()">Tout désélectionner (Ctrl 0)</div>
+				<div id="divMenuInvertSelect" class="elemPanneau" onclick="oSeq.invertSelect()">Inverser la sélection (Ctrl I)</div>
+				<div><hr></div>
+				<div id="divMenuCopierSeq" class="elemPanneau menuDisabled" onclick="oSeq.copierSel()">Copier les séquences sélectionnées (Ctrl C)</div>
+				<div><hr></div>
+				<div id="divMenuSupprimerSeq" class="elemPanneau menuDisabled" onclick="oSeq.eraseSeqSel()">Supprimer les séquences sélectionnées (Suppr)</div>
+				<div id="divMenuSupprimerToutesSeq" class="elemPanneau menuDisabled" onclick="oSeq.eraseAll()">Supprimer toutes les séquences (Alt Suppr)</div>
+				<div><hr></div>
+				<div id="divMenuAutresActions" class="elemPanneau" style="font-size:0.9em; height:4em;pointer-events:none"><i>D'autres actions sont possibles par<br>un clic droit.</i></div>
+			</div>
+			<div id="divBMActionsPanneau" class="panneauMenu ombre" style="width: 20em; left: 154.156px; top: 28.5px; display: none;">
+				<div id="divMenuNoAligner" style="display: none;"><div class="elemPanneau" style="font-size:0.9em; height:4em;pointer-events:none;color:red"><i>Décocher "Enzymes de restriction" pour<br>pouvoir à nouveau aligner les séquences.</i></div></div>
+				<div id="divMenuAligner" class="elemPanneau menuDisabled" onclick="lanceAlignement()" style="display: block;">Aligner les séquences (Alt A)</div>
+				<div id="divMenuDotPlot" class="elemPanneau menuDisabled" onclick="oDot.doDotPlot ()" style="display: block;">Réaliser un DotPlot (2 séquences)</div>
+				<div id="divMenuTranscrire" class="elemPanneau menuDisabled" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Trans')">Transcrire les séquences <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuTraduire" class="elemPanneau menuDisabled" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Trad')">Traduire les séquences <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuCompl" class="elemPanneau menuDisabled" onclick="oCode.creeComplSelSeq()">Convertir en brin complémentaire</div>
+				<div id="divMenuInv" class="elemPanneau menuDisabled" onclick="oSeq.inverseSelSeq()">Inverser les séquences</div>
+				<div><hr></div>
+				<div id="divMenuEnzymatique" class="elemPanneau menuDisabled" onclick="oEnz.toggleModeEnz()">Enzymes de restriction  <div id="divCheckModeEnzymes" class="divCheck" style="opacity: 0;"></div></div>
+				<div><hr></div>
+				<div id="divMenuAutresActions2" class="elemPanneau" style="font-size:0.8em; height:7em;pointer-events:none"><i>Seules les séquences sélectionnées seront<br>concernées par ces actions.<br>D'autres actions sont possibles par<br>un clic droit.</i></div>
+			</div>
+			<div id="divBMAffichagePanneau" class="panneauMenu ombre" style="width: 23em; left: 233.344px; top: 28.5px; display: none;">
+				<div id="divMenuAffBrinCpl" class="elemPanneau" onclick="oSeq.toggleAffBrinCpl()">Brin complémentaire <div id="divCheckAffBrinCpl" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divMenuAfficheCode" class="elemPanneau" onclick="oCode.toggleTableauCode()">Tableau du code génétique  <div id="divCheckTabCode" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divMenuAfficheAbrev" class="elemPanneau" onclick="oCode.toggleTableauAbrev()">Abréviations des acides aminés  <div id="divCheckTabAbrev" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divMenuAfficheTableau" class="elemPanneau menuDisabled" onclick="oSeq.toggleTableau()" style="display: block;">Tableau de comparaison (Alt T)<div id="divCheckTabComp" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divMenuAfficheDotPlot" class="elemPanneau menuDisabled" onclick="oDot.toggleDotPlot()" style="display: block;">DotPlot <div id="divCheckDotPlot" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divMenuAffichePhenog" class="elemPanneau menuDisabled" onclick="oSeq.togglePhenog()" style="display: block;">Phénogramme (arbre) (Alt P)<div id="divCheckPhenog" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divMenuAfficheProt" class="elemPanneau menuDisabled" onclick="oProt.toggleProt()" style="display: none;">Structure 3D (protéine) <div id="divCheckProt" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divMenuAfficheElectrophorese" class="elemPanneau menuDisabled" onclick="oElec.toggleElectro()" style="display: none;">Electrophorèse (simulée) <div id="divCheckElectro" class="divCheck" style="opacity: 0;"></div></div>
+			</div>
+			<div id="divBMOptionsPanneau" class="panneauMenu ombre" style="width: 18em; left: 326.406px; top: 28.5px; display: none;">
+				<div id="divMenuOptionAlgo" class="elemPanneau" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Algo')" style="display: block;">Algorithme d'alignement <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuOptionInDel" class="elemPanneau" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Indel')" style="display: block;">Caractère pour la délétion <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuOptionPheno" class="elemPanneau menuDisabled" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Pheno')" style="display: block;">Phénogramme <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuOptionCodeAA" class="elemPanneau" onclick="oMenu.clickMenuNiv2('divPanneauNiv2CodeAA')">Code acides aminés <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuOptionNumerotation" class="elemPanneau menuDisabled" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Numerotation')">Numérotation <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuAutoriserDecal" class="elemPanneau" onclick="oSeq.toggleDecal()">Autoriser le décalage <div id="divCheckDecal" class="divCheck" style="opacity: 0;"></div></div>
+				<div><hr></div>
+				<div id="divMenuOptionIdentite" class="elemPanneau menuDisabled" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Identite')">Identités (après alignement) <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuOptionColoration" class="elemPanneau" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Coloration')">Coloration des acides aminés <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuOptionCol3D" class="elemPanneau menuDisabled" onclick="oMenu.clickMenuNiv2('divPanneauNiv2Col3D')" style="display: none;">Coloration 3D <div style="display:inline-block;position:absolute;right:0.5em;">►</div></div>
+				<div id="divMenuPleinEcran" class="elemPanneau" onclick="toggleFullScreen()">Plein écran <div id="divCheckPleinEcran" class="divCheck" style="opacity: 0;"></div></div>
+			</div>
+			
+			<div id="divPanneauNiv2Identite" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" onclick="oSeq.setPointMatch('')"><span id="spanMenuResiduMatch">(A) Nucléotide</span> affiché <div id="divCheckIdentiteNucl" class="divCheck" style="opacity: 1;"></div></div>
+				<div class="elemPanneau" onclick="oSeq.setPointMatch('꞊')">(꞊) Signe égal <div id="divCheckIdentiteEgal" class="divCheck" style="opacity: 0;"></div></div>
+				<div class="elemPanneau" onclick="oSeq.setPointMatch('·')">(·) Point médian <div id="divCheckIdentitePoint" class="divCheck" style="opacity: 0;"></div></div>
+				<div class="elemPanneau" onclick="oSeq.setPointMatch(&quot;\&quot;&quot;)">(") Guillemet <div id="divCheckIdentiteGuill" class="divCheck" style="opacity: 0;"></div></div>
+			</div>
+			
+			<div id="divPanneauNiv2Coloration" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" onclick="oSeq.toggleColorNucl()">Arrière plan coloré <div id="divCheckColorNucl" class="divCheck" style="opacity: 1;"></div></div>
+				<div class="elemPanneau" onclick="oCode.toggleDalto()">Version pour daltonien <div id="divCheckDalto" class="divCheck" style="opacity: 0;"></div></div>
+			</div>
+			
+			<div id="divPanneauNiv2Exporter" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau menuDisabled" id="divMenuExporterSequences" onclick="oFile.exportSequences()">les séquences sélectionnées au format (.edi)</div>
+				<div class="elemPanneau menuDisabled" id="divMenuExporterSequencesFasta" onclick="oFile.exportSequencesFasta()">les séquences sélectionnées au format (.fasta)</div>
+				<div class="elemPanneau menuDisabled" id="divMenuExporterSequencesAln" onclick="oFile.exportSequencesAln()" style="display: block;">les séquences alignées au format (.aln)</div>
+				<div class="elemPanneau menuDisabled" id="divMenuExporterTableau" onclick="oFile.exportTableau()" style="display: block;">le tableau de comparaison (.csv)</div>
+				<!-- <hr> -->
+				<div class="elemPanneau" id="divMenuExporterPhylographe" style="display:none" onclick="oFile.exportPhylographe()">les séquences alignées vers PhyloGraphe</div>
+								
+			</div>
+			
+			<div id="divPanneauNiv2Col3D" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" onclick="oProt.selCol('chaine')">chaîne  <div id="divCheckCol3DChaine" class="divCheck"></div></div>
+				<div class="elemPanneau" onclick="oProt.selCol('residu')">acide aminé  <div id="divCheckCol3DResidu" class="divCheck"></div></div>
+				<div class="elemPanneau" onclick="oProt.selCol('match')">similarité (conservation)  <div id="divCheckCol3DMatch" class="divCheck"></div></div>
+			</div>
+			
+			<div id="divPanneauNiv2Algo" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" onclick="changeAlgoAlignement('auto')">Automatique (par défaut)  <div id="divCheckAlgoAuto" class="divCheck" style="opacity: 1;"></div></div>
+				<div class="elemPanneau" onclick="changeAlgoAlignement('complete')">BioMsa/Complet (lent)  <div id="divCheckAlgoComplete" class="divCheck" style="opacity: 0;"></div></div>
+				<div class="elemPanneau" onclick="changeAlgoAlignement('diag')">BioMsa/Diagonal  <div id="divCheckAlgoDiag" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divAlgoDamien" class="elemPanneau" onclick="changeAlgoAlignement('best')">PiscAmp/Intégral (lent)  <div id="divCheckAlgoBest" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divAlgoDamien2" class="elemPanneau" onclick="changeAlgoAlignement('quickstar')">PiscAmp/Central  <div id="divCheckAlgoQuickStar" class="divCheck" style="opacity: 0;"></div></div>
+				<div id="divAlgoDamien3" class="elemPanneau" onclick="changeAlgoAlignement('quickchain')">PiscAmp/Relais  <div id="divCheckAlgoQuickChain" class="divCheck" style="opacity: 0;"></div></div>
+				<div><hr></div>
+				<div id="divNoAlign" class="elemPanneau" onclick="changeAlgoAlignement('aucun')">Comparer sans alignement  <div id="divCheckAlgoNoAlign" class="divCheck" style="opacity: 0;"></div></div>
+				<div><hr></div>
+				<div id="divAlgoAbout" class="elemPanneau" onclick="aboutAlgoClick()">A propos de ces algorithmes</div>
+			</div>
+			
+			<div id="divPanneauNiv2Trans" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" style="pointer-events:none"><i>La séquence sélectionnée correspond à celle du</i></div>
+				<div class="elemPanneau" style="font-weight:bolder" onclick="oCode.transcrireSelSeq(false)">&nbsp;&nbsp;brin non transcrit (par défaut)</div>
+				<div class="elemPanneau" onclick="oCode.transcrireSelSeq(true)">&nbsp;&nbsp;brin transcrit (brin matrice)</div>
+				<div><hr></div>
+				<div class="elemPanneau" style="font-size:0.8em; height:7em;pointer-events:none"><i>La plupart du temps les séquences fournies <br>correspondent au brin <b>non transcrit</b>.<br>Sauf cas exceptionnel, vous devez choisir cette option.</i></div>
+			</div>
+			
+			<div id="divPanneauNiv2Trad" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" onclick="oCode.traduireSelSeq('debut')">à partir du début de la séquence</div>
+				<div class="elemPanneau" id="divMenuTraduirePrem" onclick="oCode.traduireSelSeq('premier')">à partir du premier codon d'initiation</div>
+			</div>
+			
+			<div id="divPanneauNiv2Pheno" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" onclick="oUPGMA.setWeighted(false)">Méthode UPGMA (recommandé)  <div id="divCheckUPGMA" class="divCheck" style="opacity: 1;"></div></div>
+				<div class="elemPanneau" onclick="oUPGMA.setWeighted(true)">Méthode WPGMA <div id="divCheckWPGMA" class="divCheck" style="opacity: 0;"></div></div>
+			</div>
+			
+			<div id="divPanneauNiv2Indel" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" onclick="oSeq.changeIndelChar('-')"><span id="spTrTiretHaut">Tiret haut</span> <div id="divCheckTiretHaut" class="divCheck" style="opacity: 0;"></div></div>
+				<div class="elemPanneau" onclick="oSeq.changeIndelChar('_')"><span id="spTrTiretBas">Tiret bas</span> <div id="divCheckTiretBas" class="divCheck" style="opacity: 1;"></div></div>
+			</div>
+			
+			<div id="divPanneauNiv2Numerotation" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" onclick="oSeq.changeNumer(0)">Nucléotide <div id="divCheckNumNucleo" class="divCheck" style="opacity: 1;"></div></div>
+				<div class="elemPanneau" onclick="oSeq.changeNumer(1)">Acide aminé / codon <div id="divCheckNumCodon" class="divCheck" style="opacity: 0;"></div></div>
+			</div>
+			
+			<div id="divPanneauNiv2CodeAA" class="panneauMenu panneauNiv2 ombre" style="left: 0px; top: 0px; display: none;">
+				<div class="elemPanneau" onclick="oSeq.changeCodeAA3(false)">1 lettre <div id="divCheckAA1" class="divCheck" style="opacity: 0;"></div></div>
+				<div class="elemPanneau" onclick="oSeq.changeCodeAA3(true)">3 lettres <div id="divCheckAA3" class="divCheck" style="opacity: 1;"></div></div>
+			</div>
+		</div> <!-- /divMenu -->
+		
+		<div id="divAvertCache" style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; z-index: 99; background-color: rgba(255, 255, 255, 0.7); display: none;">
+			<div style="position:absolute;top:50%;left:50%;width:24em;height:15em;border:1px solid black;background-color:white;transform:translate(-50%,-50%);padding:1em;animation:fadeInAvert 2s">
+				<h2>Chargement de Geniegen2 en cours</h2>
+				<br>
+				Si ce message persiste, Geniegen2 ne s'est pas chargé correctement et il est probable que le problème vienne du cache de votre navigateur, ou d'un problème au niveau du serveur. 
+				<br><br>
+				Vous pouvez forcer le rafraichissement du cache, vider le cache, ou tenter d'aller sur le site de l'auteur <a href="https://cosphilog.fr">(https://cosphilog.fr)</a> si vous n'y êtes pas déjà.
+			</div>
+		</div>
+	</div><!-- divBody -->
+	</div><!-- divDrag -->
+	
+	<script>
+	
+
+	</script>
+
+</body></html>
