@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# IDE
+.vscode/
+.idea/
+
+# Streamlit
+.streamlit/

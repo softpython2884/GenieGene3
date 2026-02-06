@@ -1,0 +1,7 @@
+playwright
+google-genai
+python-dotenv
+colorama
+beautifulsoup4
+streamlit
+watchdog
